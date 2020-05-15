@@ -1,159 +1,101 @@
-const expect = require('expect');
+const chai = require('chai');
+const jsdom = require('jsdom-global');
+// const { JSDOM } = jsdom;
+// const expect = require('expect');
 const path = require('path');
 const nock = require('nock');
 const request = require('supertest');
-const http = require('http');
-const Mock = require('./utils/mock');
+// const http = require('http');
+// const Mock = require('./utils/mock');
 const app = require('../app');
-//filteringPath(/(["]{0,1}date["]{0,1})[:][\s]{0,1}["](\w|\d|:|\s|,)*["]{0,1}/g, '$1: "blank"')
+const fs = require('fs');
+const pug = require('pug');
+// const config = require('../config/index.js');
+// const pug = require('pug');
+// const Vue = require('vue');
+// const { PublisherTest, ContentTest, SignatureTest } = require('../models/index.js');
+const { expect } = chai;
 const nockBack = nock.back;
 nockBack.fixtures = path.join(__dirname, '.', '__nock-fixtures__');
 
-function okay(res) {
-  if (res.ok) {
-    console.log(res)
-    return res;
-  } else {
-    return null;
-  }
-}
-
-function beforeFunc(body, aRecordedBody) {
-  const dateRx = /(["]{0,1}(date)["]{0,1})[:][\s]{0,1}["](\w|\d|:|\s|,)+["]{0,1}/g;
-  if (typeof(body) !== 'string') {
-    body = body + '';
-  }
-  const bodyResult = dateRx.exec(body);
-  const recordedBodyResult = require('./__snapshots__/index.test.js.snap');
-  const keys = Object.keys(recordedBodyResult);
-  if (recordedBodyResult && keys.length) {
-    keys.forEach((a,b) => {
-      console.log(b, aRecordedBody)
-      if (b === aRecordedBody) {
-        const dateInRecord = dateRx.test(recordedBodyResult[a])
-        if (!dateInRecord || !bodyResult) {
-          
-        } else {
-          const recordedTimestamp = dateRx.exec(recordedBodyResult[a])//recordedBodyResult[a].split(dateRx);
-          console.log(recordedTimestamp)
-          bodyResult.forEach((c,d) => {
-            if (b === d) {
-              body.replace(
-                c, recordedTimestamp
-                // dateRx,
-                // (match, key, value) => `${recordedTimestamp}`
-              )
-            }
-          })
-        }
-      }
-    })
-    return JSON.parse(body);
-    
-  } else {
-    return body
-  }
-}
-
-const recording = process.env.RECORD_ENV;
-const testing = process.env.TEST_ENV;
-console.log(recording)
+const cleanup = jsdom()
+;// const recording = process.env.RECORD_ENV;
+// const testing = process.env.TEST_ENV;
 nockBack.setMode('record');
 
 describe('API call', () => {
-  let key, gp, agent;
-  // eslint-disable-next-line no-undef
-  beforeAll(async(done) => {
-    nock.enableNetConnect('127.0.0.1');
-    await app.listen(4000, () => {
-      console.log('connected');
-      agent = request.agent(app)
-      done()
-    })
-  }, 5000);
-  beforeEach(async() => {
-    nockBack.setMode('record');
-  });
-  afterEach(async() => {
-    // this ensures that consecutive tests don't use the snapshot created
-    // by a previous test
-    nockBack.setMode('wild');
-    nock.cleanAll();
-  });
-  afterAll((done) => {
-    console.log('disconnecting');
-    app.close(); 
-    setImmediate(done);
-  });
+	let key, gp, agent;
+	// eslint-disable-next-line no-undef
+	before(async() => {
+		nock.enableNetConnect('127.0.0.1');
+		await app.listen(process.env.PORT, () => {
+			console.log('connected');
+			agent = request.agent(app)
+			jsdom(app,
+				{url: 'http://127.0.0.1:9098'}
+			);
 
-  key = 'should get thought object';
-  test(key, async(done) => {
-    await nockBack(
-      'dh.thought.json', {
-        // filteringScope: (scope) => /^http(?!<=s):\/\/((localhost)|(127.0.0.1))[:][0-9]*/g.test(scope), 
-        before: beforeFunc
-      }
-    // ).then(
-    , async (nockDone) => {
-      nock.enableNetConnect(/(pdqweb\.azurewebsites\.net)/);
-      nock.enableNetConnect('127.0.0.1');
-      const api = (
-        !recording ? 
-        await new Mock(key).data.thought : 
-        await
-          agent
-          .post('/thought')
-          .then((doc) => doc).catch((err) => console.log(err))
-      );
-      expect(api).toMatchSnapshot();
-      nockDone();
-      if (api) gp = JSON.parse(api.text);
-      // console.log(api)
-      if (!recording) {
-        expect(api)
-        .toHaveBeenCalled();
-      }
-      done();
-    })
-  }, 10000)
-  key = 'should get employee avatar';
-  test(key, async(done) => {
-    await nockBack(
-      'dh.avatar.json', {
-        // filteringScope: (scope) => /^http(?!<=s):\/\/((localhost)|(127.0.0.1))[:][0-9]*/g.test(scope), 
-        before: beforeFunc 
-      }
-    // ).then(
-    , async (nockDone) => {
-      nock.enableNetConnect(/(pdqweb\.azurewebsites\.net)/);
-      nock.enableNetConnect('127.0.0.1');
-      const api = (
-        !recording ? 
-        await new Mock(key).data.thought : 
-        await 
-          agent
-          .post(`/employee/${gp.thought.name}`)
-          .then((doc) => doc).catch((err) => console.log(err))
-      );
-      expect(api).toMatchSnapshot();
-      nockDone();
-      if (!recording) {
-        expect(api)
-        .toHaveBeenCalled();
-      }
-      done()
-    })
-    // .catch((err) => console.log(err))
-    // const { nockDone } = await nockBack(
-    //   'dh.avatar.json'
-    //   // , { 
-    //     // filteringScope: (scope) => /^http(?!<=s):\/\/((localhost)|(127.0.0.1))[:][0-9]*/g.test(scope), 
-    //     // before: beforeFunc 
-    //   // }
-    // )
-    // .filteringRequestBody(beforeFunc);
-    
-  }, 8000);
-  
-  
+		})
+	}, 5000);
+	beforeEach(async() => {
+		nockBack.setMode('record');
+	});
+	afterEach(async() => {
+		// this ensures that consecutive tests don't use the snapshot created
+		// by a previous test
+		nockBack.setMode('wild');
+		nock.cleanAll();
+	});
+	after(() => {
+		console.log('disconnecting');
+		// app.close(); 
+		// cleanup()
+	});
+
+	key = 'should get a header';
+	it(key, async () => {
+		const { nockDone } = await nockBack(
+			'app.header.json'
+		);
+		nock.enableNetConnect('127.0.0.1');
+		await agent
+		.get('/')
+		.expect(200)
+		// .expect('Location', '/home')
+		.then((res)=>{
+			header = res.header;
+			expect(header).to.matchSnapshot();
+		})
+		nockDone()
+	})
+	
+	key = 'should init game';
+	it(key, async () => {
+		nock.enableNetConnect('127.0.0.1');
+		await agent
+		.get('/')
+		.expect(200)
+		.then(async(res) => {
+			// const window = (new JSDOM(res.text, {url: 'http://localhost:9098'}));
+			// const { localStorage } = window.window;
+			// document.html = res.text;
+			// const { localStorage, document } = window;
+			// const uid = localStorage.getItem('__cardgame_uid__');
+			// expect(uid).to.equal(null);
+			// // await res.send(res.text);
+			// // window.document = res.text;
+			// // console.log(document.body)
+			// document.innerHTML = res.text;
+			// console.log(document)
+			expect(document.html).to.equal(res.text)
+			// expect(JSON.parse(JSON.stringify(window.document.body.innerHTML))).to.equal(res.text)
+			// await agent
+			// .post()
+			// setTimeout(()=>{
+			// 	expect(app.locals.cards).to.matchSnapshot()
+			// },5000)
+			
+		})
+	})
+	
 });

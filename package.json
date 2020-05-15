@@ -4,8 +4,8 @@
   "description": "Cabalistic_Necromancer",
   "main": "./app.js",
   "scripts": {
-    "test": "cross-env TEST_ENV=true RECORD_ENV=true jest --updateSnapshot --forceExit --detectOpenHandles",
-    "test-lock": "cross-env TEST_ENV=true RECORD_ENV=false jest --forceExit --detectOpenHandles",
+    "test": "cross-env TEST_ENV=true RECORD_ENV=true mocha --require mocha-snapshots --update",
+    "test-lock": "cross-env TEST_ENV=true RECORD_ENV=false mocha --require mocha-snapshots",
     "start": "nodemon"
   },
   "repository": {
@@ -29,22 +29,28 @@
     "testEnvironment": "node"
   },
   "dependencies": {
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "glob": "^7.1.4",
-    "helmet": "^3.18.0",
-    "jquery": "^3.4.1",
-    "pug": "^2.0.3",
-    "request": "^2.88.0",
-    "request-promise-native": "^1.0.7",
+    "glob": "^7.1.6",
+    "helmet": "^3.22.0",
+    "jquery": "^3.5.1",
+    "pug": "^2.0.4",
+    "request": "^2.88.2",
+    "request-promise-native": "^1.0.8",
     "serve-favicon": "^2.5.0"
   },
   "devDependencies": {
-    "cross-env": "^5.2.0",
-    "expect": "^24.8.0",
-    "jest": "^24.8.0",
+    "chai": "^4.2.0",
+    "cross-env": "^5.2.1",
+    "enzyme": "^3.11.0",
+    "expect": "^24.9.0",
+    "jsdom": "^16.2.2",
+    "jsdom-global": "^3.0.2",
+    "mocha": "^7.1.2",
+    "mocha-snapshots": "^4.2.0",
     "nock": "^10.0.6",
-    "nock-record": "^0.3.3",
-    "nodemon": "^1.19.1",
+    "nock-record": "^0.3.4",
+    "nodemon": "^1.19.4",
     "supertest": "^4.0.2"
   }
 }

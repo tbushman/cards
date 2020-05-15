@@ -4,17 +4,22 @@ block header
 block content
 	
 	div.centerallwrap#vue
-		.ui(v-if="avatar")
+		
+		.ui(v-if="play")
 			//- img(src= avatar)
-			img(v-if="avatar", :src="avatar",
-				@mouseover="hovOver(thought.name)", @mouseleave="hovLeave"
-			)
-			p(v-if="thought", v-text="thought.name")
+			//- img(v-if="play && play.name", :src="avatar",
+			//- 	@mouseover="hovOver(play.name)", @mouseleave="hovLeave"
+			//- )
+			p(v-text="play.name")
 		div.centerall(@resize="getBubbleSize()")
-			
+			#modal.centerallwrap.tb-10-m0(v-if="modal", style="position: absolute;")
+				div.centarall
+					label(v-text="'Your name / nickname'")
+					input#uid(:value="(!user? '' : user.name)")
+					a.row(role="button", @click="localStorageName", v-text="'submit'")
 			//:style="{'enable-background':('new 0 0 ' + (wih - 90) + ' ' + (wih - 90)), width: (wiw + 'px'), position: 'absolute'}",
 			//preserveAspectRatio="none", 
-			div.tb-10-m0.tb-07-m2.centerallwrap(style="height:calc(100% - 90px);", v-if="avatar")
+			div.tb-10-m0.tb-07-m2.centerallwrap(style="height:calc(100% - 90px);")
 				svg(version="1.1", width="100%", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px", 
 				:viewBox="(wiw <= 1000 ? '0 0 ' + (wiw - 90) + ' ' + ((wih - 90) - 90) +'' : '0 0 ' + ((wiw - 90) * .7) + ' ' + ((wih - 90) - 90) +'')", 
 				style="position: absolute;",
@@ -22,34 +27,26 @@ block content
 					defs
 						clipPath#clipPath
 							path(v-if="bubblesize", :transform="bubblesize", d="M465.9,77.4c8.6-8.2,14-19.7,14-32.5c0-24.8-20.1-44.9-44.9-44.9c-12.8,0-24.3,5.4-32.5,13.9 C394.2,5.4,382.7,0,369.9,0c-12.8,0-24.3,5.4-32.5,13.9C329.2,5.4,317.7,0,304.9,0c-12.8,0-24.3,5.4-32.5,13.9 C264.2,5.4,252.7,0,239.9,0c-12.8,0-24.3,5.4-32.5,13.9C199.2,5.4,187.7,0,174.9,0c-12.8,0-24.3,5.4-32.5,13.9 C134.2,5.4,122.7,0,109.9,0C97.1,0,85.6,5.4,77.4,13.9C69.2,5.4,57.7,0,44.9,0C20.1,0,0,20.1,0,44.9c0,12.8,5.4,24.3,14,32.5 C5.4,85.6,0,97.1,0,109.9c0,12.8,5.4,24.3,14,32.5C5.4,150.6,0,162.2,0,175c0,12.8,5.4,24.3,14,32.5C5.4,215.7,0,227.2,0,240 c0,12.8,5.4,24.3,14,32.5C5.4,280.7,0,292.2,0,305c0,12.8,5.4,24.3,14,32.5c-8.6,8.2-14,19.7-14,32.5c0,12.8,5.4,24.3,14,32.5 c-8.6,8.2-14,19.7-14,32.5C0,459.9,20.1,480,44.9,480c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9 c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9 c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9 c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9c24.8,0,44.9-20.1,44.9-44.9c0-12.8-5.4-24.3-14-32.5 c8.6-8.2,14-19.7,14-32.5c0-12.8-5.4-24.3-14-32.5c8.6-8.2,14-19.7,14-32.5c0-12.8-5.4-24.3-14-32.5c8.6-8.2,14-19.7,14-32.5 c0-12.8-5.4-24.3-14-32.5c8.6-8.2,14-19.7,14-32.5c0-12.8-5.4-24.3-14-32.5c8.6-8.2,14-19.7,14-32.5 C479.8,97.1,474.4,85.6,465.9,77.4z")
-				div.bubble.centerall(v-if="thought")
-					p.loltxt(v-text="thought.currentThought")
-					img(:src="thought.daydream")
-			div.tb-03-m2.clear(style="margin:0;height:0;")
-			div.tb-07-m2.clear(style="margin:0;height:0;")
-			div.tb-10-m0.tb-03-m2(style="transform: translateY(-10px);")
-				div.tb-10-m0
-					div.dot
-					div.tb-06-m0.tb-08-m1.tb-07-m2(v-if="info", style="padding-left: 10px")
-						p.tb-font-xxs(style="vertical-align:bottom;", v-text="info")
-				div.tb-10-m0
-					div.dot
-					div.tb-06-m0.tb-08-m1.tb-07-m2(v-if="avatar && thought", style="float:right;")
-						p.tb-font-xxs(style="vertical-align:bottom;")
-							strong(v-text="'Name: '")
-							span(v-text="thought.name")
-				div.tb-10-m0
-					div.dot
-					div.tb-06-m0.tb-08-m1.tb-07-m2(v-if="avatar && thought && thought.currentBeer", style="float:right;")
-						p.tb-font-xxs(style="vertical-align:top;")
-							strong(v-text="'Drinking: '")
-							span(v-text="thought.currentBeer")
+				//- div.tb-10-m0.tb-07-m2.centerallwrap(style="height:calc(100% - 90px);")
+			
+				div.bubble.centerall#meeting
+					
+				//- (v-if="play")
+				//- 	p.loltxt(v-text="play.currentPlay")
+				//- div.centerallwrap(v-if="cards && cards.length > 0")
+				div.bubble.centerall(v-if="cards && cards.length > 0")
+					img(v-for="(card, i) in cards" :src="'/images/'+card+'.svg'" style="position:absolute;width:100%;height:auto;" :style="{transform:'rotate('+(i*10)+'deg) scale(0.5)', 'transform-origin': 'bottom left'}")
 			div.tb-10-m0(style="transform: translateY(-5px);")
 				div.row
-					button(v-if="!thinking", :class="(!avatar ? '' : 'btr')", @click="getThought", v-text="(!avatar ? 'Read someone\\'s mind' : 'Read someone else\\'s mind')",
-						:style="{display: (!avatar ? 'inline-block' : 'inherit'), margin: (!avatar ? '0' : '0 auto'), 'padding': (!avatar ? '10px' : '12px 20px 20px 20px')}"
+					button(
+						v-if="!busy"
+						:class="(!play.name ? '' : 'btn')"
+						@click="(!play.name ? startPlay($event) : nextPlay($event))"
+						v-text="(!play.name ? 'Start game' : 'Deal')"
+						:style="{display: (!play.name ? 'inline-block' : 'inherit'), margin: (!play.name ? '0' : '0 auto'), 'padding': (!play.name ? '10px' : '12px 20px 20px 20px')}"
 					)
-					p(v-if="thinking", v-text="appTitle+' in use. Please wait.'")
+					p(v-if="busy", v-text="appTitle+' in use. Please wait.'")
+					button.tb-10-m0(v-text="'stop'", @click="unload")
 
 
 				

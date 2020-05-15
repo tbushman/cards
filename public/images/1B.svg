@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="162px" height="252px" viewBox="0 0 162 252" enable-background="new 0 0 162 252" xml:space="preserve">
+<pattern  x="-168.5" y="226.5" width="4.585" height="4.596" patternUnits="userSpaceOnUse" id="B1" viewBox="0 -4.596 4.585 4.596" overflow="visible">
+	<g>
+		<polygon fill="none" points="0,0 4.585,0 4.585,-4.596 0,-4.596 		"/>
+		<path d="M2.292,0l2.292-2.298L2.292-4.596L0-2.298L2.292,0z"/>
+	</g>
+</pattern>
+<path fill="#FFFFFF" stroke="#000000" d="M-91.099-164.117H41.099c8.019,0,14.519,6.516,14.519,14.553V72.564
+	c0,8.038-6.5,14.553-14.519,14.553H-91.099c-8.019,0-14.519-6.516-14.519-14.553v-222.128
+	C-105.618-157.602-99.118-164.117-91.099-164.117z"/>
+<pattern  id="SVGID_1_" xlink:href="#B1" patternTransform="matrix(0.7642 0 0 -0.766 -2001.6938 -14158.4092)">
+</pattern>
+<path fill="url(#SVGID_1_)" d="M-79.255-153.394h108.51c8.019,0,14.519,6.516,14.519,14.553V61.84c0,8.038-6.5,14.553-14.519,14.553
+	h-108.51c-8.019,0-14.519-6.516-14.519-14.553V-138.84C-93.773-146.878-87.273-153.394-79.255-153.394z"/>
+</svg>

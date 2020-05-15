@@ -1,3 +1,4 @@
+var dotenv = require('dotenv');
 const helmet = require('helmet');
 const jQuery = require('jquery');
 const express = require('express');
@@ -12,58 +13,22 @@ app.set('view engine', 'pug');
 app.use(express.static(path.join('.', 'public')));
 app.use(favicon(path.join('.', 'public/img', 'favicon.ico')));
 app.locals.$ = jQuery;
-app.locals.appTitle = 'PDQ Cabalistic_Necromancer';
-app.locals.appUrl = 'http://localhost:4000';
+app.locals.appTitle = 'Cardgame';
+app.locals.appUrl = (process.env.NODE_ENV==='production' ? process.env.APP_URL : `http://localhost:${process.env.PORT}`);
 app.use(helmet());
 app.use(helmet.noCache());
 
-// for iterating through potential last name initial (unknown)
-const alpha = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-// for iterating through potential image folders (unknown)
-const dates = ['2018/08', '2018/09', '2018/10', '2018/12', '2019/02', '2019/04', '2019/05', '2019/06']
-// check if image exists for first name given
-function getImageUrls(req, res, next) {
-	delete req.urli;
-	const name = req.params.name;
-	// iterate through folders named by date, looking for an image named by given first name but this time without last name initial
-	dates.forEach(async (a) => {
-		if (req.urli) return;
-		const imgurl = `https://cdn.pdq.com/wp-content/uploads/${a}/company_${name}.png`;
-		const img = await request(imgurl)
-		.then((d) => d)
-		.catch((e) => {
-			// ignore not-found errors
-			if (e.statusCode && e.statusCode === 404) return null;
-			return next(e);
-		})
-		if (img) {
-			req.urli = imgurl
-			return next();
-		}
-		// iterate through all possible last name initials for given name
-		await alpha.forEach(async (c) => {
-			// if an image was already found, return
-			if (req.urli) return;
-			const imgiurl = `https://cdn.pdq.com/wp-content/uploads/${a}/company_${name}${c}.png`;
-			const imgi = await request(imgiurl)
-			.then((d) => d)
-			.catch((e) => {
-				if (e.statusCode && e.statusCode === 404) return null;
-				return next(e);
-			})
-			if (imgi) {
-				req.urli = imgiurl;
-				return next()
-			}
-		})
-	});
+dotenv.config()
+const play = {
+	name: '',
+	currentPlay: ''
 }
 
 app.get('/reset', (req, res, next) => {
 	// redirected from 500 error
-	delete app.locals.thought;
-	app.locals.avatar = null;
-	app.locals.thinking = false;
+	delete app.locals.play;
+	// app.locals.avatar = null;
+	app.locals.busy = false;
 	app.locals.info = 'Please try again.'
 	return res.redirect(307, '/');
 })
@@ -71,72 +36,66 @@ app.get('/reset', (req, res, next) => {
 app.get('/', (req, res, next) => {
 	return res.render('main', {
 		info: app.locals.info,
-		thought: app.locals.thought,
-		thinking: false,
-		avatar: app.locals.avatar
+		play: app.locals.play,
+		busy: false,
+		cards: app.locals.cards
+		// avatar: app.locals.avatar
 	})
 })
 
-// request brain api and return result
-app.post('/thought', async (req, res, next) => {
-	// reset locals info
-	delete app.locals.info;
-	// only one API call at a time
-	if (!app.locals.thinking) {
-		// delete app.locals.thought;
-		app.locals.thinking = true;
-		app.locals.avatar = null;
-		await request('https://pdqweb.azurewebsites.net/api/brain')
-		.then(async (response) => {
-			if (response) {
-				app.locals.thought = JSON.parse(response);
-				app.locals.thinking = false;
-			}
-			return res.status(200).send({
-				thought: app.locals.thought,
-				thinking: app.locals.thinking
-			});
-		})
-		.catch((err) => next(err));
-	} else {
-		// no change
-		return res.status(200).send({
-			thought: app.locals.thought,
-			thinking: true
-		})
-	}
+app.post('/save/:cards', async(req,res,next)=>{
+	console.log(decodeURIComponent(req.params.cards))
+	app.locals.cards = JSON.parse(decodeURIComponent(req.params.cards));
+	return res.status(200).send(app.locals.cards)
 })
 
-app.post('/employee/:name', getImageUrls, async (req, res, next) => {
-	if (req.urli) {
-		const url = req.urli;
-		app.locals.urli = req.urli;
-		return res.status(200).send(url)
+app.post('/play/:uid/:card', async(req, res, next) => {
+	if (!app.locals.busy) {
+		delete app.locals.info;
+		app.locals.busy = true;
+		// app.locals.avatar = req.params.uid;
+		app.locals.play = {
+			currentPlay: req.params.card,
+			name: req.params.uid
+		}
+		app.locals.busy = false;
+		return res.status(200).send({
+			play: app.locals.play,
+			busy: app.locals.busy
+		});
+	} else {
+		return res.status(200).send(null
+			/*{
+			play: app.locals.play,
+			busy: true
+		}*/
+		)
+
 	}
 })
 
 // polled in half-second increments for front-end reactive button state
 app.post('/check', (req, res, next) => {
-	if (app.locals.thinking) {
+	if (app.locals.busy) {
 		return res.status(200).send({
-			thinking: app.locals.thinking,
-			thought: app.locals.thought,
-			avatar: app.locals.avatar
+			busy: app.locals.busy,
+			play: app.locals.play,
+			// avatar: app.locals.avatar
 		});
 	} else {
 		return res.status(200).send({
-			thinking: false,
-			thought: app.locals.thought,
-			avatar: app.locals.avatar
+			busy: false,
+			play: app.locals.play,
+			// avatar: app.locals.avatar
 		});
 	}
 })
 
-app.post('/notthinking', (req, res, next) => {
-	app.locals.thinking = false;
-	if (req.query.q) {
-		app.locals.avatar = decodeURIComponent(req.query.q) + '';
-	}
+app.post('/notbusy', (req, res, next) => {
+	app.locals.busy = false;
+	// if (req.query.q) {
+	// 	app.locals.avatar = decodeURIComponent(req.query.q) + '';
+	// }
 	return res.status(200).send('ok')
 })
 
@@ -147,8 +106,8 @@ app.use((err, req, res, next) => {
 	if (
 		is500Err
 	) {
-		delete app.locals.thought;
-		app.locals.thinking = false;
+		delete app.locals.play;
+		app.locals.busy = false;
 		app.locals.info = 'Please try again.'
 		return res.status(500).end(err)
 	} else {
@@ -161,14 +120,14 @@ app.use((err, req, res, next) => {
   res.render('error', { error: err })
 })
 
-app.set('port', '80');
+app.set('port', process.env.PORT);
 if (!process.env.TEST_ENV) {
 	const server = http.createServer(app);
-	server.listen('80')//, onListening);
+	server.listen(process.env.PORT)//, onListening);
 	server.on('error', (error) => {throw error});
 	server.on('listening', onListening);
 	function onListening() {
-		console.log('listening on 4000:80')
+		console.log(`listening on ${process.env.PORT}`)
 	}
 }
 

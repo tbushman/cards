@@ -1,145 +1,256 @@
+script(src="/scripts/jitsiFunctions.js")
 script(type="text/javascript").
 	Vue.prototype.$ = $;
+	Vue.prototype.window = window;
+	//- Vue.prototype.marked = marked;
+	//- Vue.prototype.moment = moment;
+	Vue.prototype.JitsiMeetExternalAPI = window.JitsiMeetExternalAPI;
+	Vue.prototype.localStorage = localStorage;
 	new Vue({
 		el: '#vue',
 		data: function data() {
 			return {
-				missingAvatar: false,
+				res: window.innerWidth < 600,
+				api: null,
 				info: (this.parseObj(!{JSON.stringify(info)}) === '' ? this.parseObj(!{JSON.stringify(appTitle)}) : this.parseObj(!{JSON.stringify(info)})),
-				avatar: null,
-				thought: this.parseObj(!{JSON.stringify(thought)}),
-				thinking: this.parseBool(!{JSON.stringify(thinking)}),
+				play: this.parseObj(!{JSON.stringify(play)}),
+				busy: this.parseBool(!{JSON.stringify(busy)}),
 				hov: '',
 				timeout: '',
 				interval: '',
 				appTitle: this.parseObj(!{JSON.stringify(appTitle)}),
 				wiw: window.innerWidth,
 				wih: window.innerHeight,
-				bubblesize: null
+				bubblesize: null,
+				modal: false,
+				suits: ['heart', 'club', 'diamond', 'spade'],
+				cards: this.parseObj(!{JSON.stringify(cards)}),
+				decka: [],
+				deckb: [],
+				deckc: [],
+				discard: [],
+				connection: null,
+				room: null,
+				localTracks: [],
+				remoteTracks: {},
+				isVideo: false,
+				isJoined: false,
+				isFirefox: (!navigator ? true : navigator.userAgent.includes('Firefox')),
+				isSafari: /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification)),
+				user: ''
 			}
 		},
-		updated() {
+		updated: function() {
 
 		},
-		beforeDestroy() {
+		beforeDestroy: function() {
 			var self = this;
 			clearTimeout(self.timeout);
 			clearInterval(self.interval);
+			//- self.connection.disconnect()
+			self.unload()
 		},
-		mounted() {
+		mounted: async function() {
 			var self = this;
 			self.getBubbleSize();
-			window.addEventListener('resize', self.handleResize)//- window.onresize = self.getBubbleSize();
-			self.interval = setInterval(() => {
-				$.post('/check')
-				.then((result) => {
-					if (result && result !== undefined) {
-						self.thinking = result.thinking;
+			window.addEventListener('resize', self.handleResize);
+			self.interval = setInterval(function() {
+				$.post('/check', function(err, result) {
+					if (err) {
+						self.busy = false;
+						return;
 					} else {
-						self.thinking = false;
+						if (result && result !== undefined) {
+							self.busy = result.busy;
+						} else {
+							self.busy = false;
+						}
+						self.play = result.play;
 					}
-					self.thought = result.thought;
-					self.avatar = result.avatar;
 				})
-				.catch((err) => {
-					if (err) self.thinking = false;
-				})
-			}, 500)
+			}, 500);
+			//- console.log(JitsiMeetJS)
+			//- if (!self.api) {
+			//- 	if (typeof self.getJitsiApi === 'function')	self.getJitsiApi()
+			//- }
+			if (!self.cards || self.cards === '' || self.cards === '[]') {
+				self.getCards()
+				
+			}
 		},
-		methods: {
-			parseObj(obj) {
+		methods: Object.assign(jitsiFunctions, {
+			parseObj: function(obj) {
 				if (!obj) return '';
 				return obj;
 			},
-			parseBool(bool) {
+			parseBool: function(bool) {
 				if (!bool) return false;
 				return bool;
 			},
-			hovOver(name) {
+			hovOver: function(name) {
 				this.hov = name;
 			},
-			hovLeave() {
+			hovLeave: function() {
 				this.hov = ''
 			},
-			handleResize() {
+			handleResize: function() {
 				var self = this;
 				self.wiw = window.innerWidth;
 				self.wih = window.innerHeight;
 				self.getBubbleSize();
 			},
-			getBubbleSize() {
+			getBubbleSize: function() {
 				var self = this;
 				var initsize = 480;
 				var targetWidth = (!self.wiw <= 1000 ? (self.wiw - 90) : ((self.wiw - 90) * 0.7));
 				var diffW = targetWidth - initsize;
 				var perW = diffW / targetWidth;
 				var scaleW = 1 + perW;
-				var targetHeight = (self.wih - 90) - 90;
+				var targetHeight = self.wih * 0.5;
 				var diffH = targetHeight - initsize;
 				var perH = diffH / targetHeight;
 				var scaleH = 1 + perH;
 				self.bubblesize = 'scale('+scaleW+', '+scaleH+')';
+				self.framesize = [targetWidth-8,targetHeight-8]
 			},
-			getAvatar(thinking) {
+			getCards: function(){
 				var self = this;
-				console.log(thinking)
-				$.post(`/employee/${self.thought.name}`)
-				.then((avatar) => {
-					self.avatar = avatar;
-					self.thinking = (!self.thought ? (!thinking ? false : true) : thinking);
-					self.missingAvatar = false;
-					if (!self.thinking) {
-						// inform server of notthinking status
-						$.post('/notthinking?q='+encodeURIComponent(avatar)+'')
-						.then((result) => {
-						})
-						.catch((err) => {
-							console.log(err)
-						})
+				var deck = new Array(52);
+				var deck1 = deck.fill(undefined).map(function(v,j){
+					var suit = '';
+					var court = null;
+					var i = j;
+					if (i <= 12) {
+						court = i+1;
+						if (i === 10) {
+							court = 'j'
+						} else if (i === 11) {
+							court = 'q'
+						} else if (i === 12) {
+							court = 'k'
+						}
+						suit = 'club';
+					}
+					if (i > 12 && i <= 25) {
+						court = i - 12;
+						if (i === 23) {
+							court = 'j'
+						} else if (i === 24) {
+							court = 'q'
+						} else if (i === 25) {
+							court = 'k'
+						}
+						suit = 'diamond';
+					}
+					if (i > 25 && i <= 38) {
+						court = i - 25;
+						if (i === 36) {
+							court = 'j'
+						} else if (i === 37) {
+							court = 'q'
+						} else if (i === 38) {
+							court = 'k'
+						}
+						suit = 'heart';
+					}
+					if (i > 38) {
+						court = i - 38;
+						if (i === 49) {
+							court = 'j'
+						} else if (i === 50) {
+							court = 'q'
+						} else if (i === 51) {
+							court = 'k'
+						}
+						suit = 'spade';
+					}
+					if (court) {
+						var card = suit + court;
+						return card
 					}
 				})
-				.catch((err) => console.log(err));
-				self.timeout = setTimeout(() => {
-					if (!self.avatar) {
-						self.avatar = '/img/avatar.svg';
-						self.missingAvatar = true;
-						self.info = 'No image found for given Employee.';
-						clearTimeout(self.timeout);
-						$.post('/notthinking?q='+encodeURIComponent(self.avatar)+'').then((result) => {})
-						.catch((err) => {
-							console.log(err)
-						})
-					}
-					self.thinking = (!self.thought ? (!self.thinking ? false : true) : false);
-				}, 12000)
+				var deckb = deck1;
+				var deckc = deck1;
+				var cards = self.shuffle(deck1.concat(deckb, deckc));
+				console.log(cards)
+				$.post(`/save/${encodeURIComponent(JSON.stringify(cards))}`, function(response){
+					self.cards = response;
+				});
 			},
-			getThought() {
+			startPlay: function(e){
 				var self = this;
-				self.avatar = null;
-				self.info = null;
-				clearTimeout(self.timeout);
-				if (!self.thinking) {
-					self.thinking = true;
-					$.post('/thought')
-					.then((body) => {
-						if (!body.thought) {
-							return window.location.href = '/reset';
-						}
-						self.thought = body.thought;
-						return self.getAvatar(body.thinking);
-					})
-					.catch((err) => {
-						if (err.status === 500) {
-							$.post('/notthinking')
-							.then((result) => {
-								return window.location.href = '/reset';
-							})
-							.catch((err) => {
-								console.log(err)
-							})
-						}
-					})
+				console.log(e)
+				var domain = 'bli.sh';
+				var options = {
+					roomName: self.appTitle,
+					width: (!self.framesize ? (!self.res ? (self.wWidth * 0.66) : (self.wWidth*0.86)) : self.framesize[0]) +'px',
+					height: (!self.framesize ? (!self.res ? ((self.wWidth * 0.66) * 0.72) : ((self.wWidth * 0.72) * 0.95)) : self.framesize[1])+'px',
+					parentNode: document.getElementById(`meeting`),
+					// noSSL: false
+				};
+				self.api = new JitsiMeetExternalAPI(domain, options);
+				var iframe = document.getElementById(`jitsiConferenceFrame`)
+				setTimeout(function(){
+					iframe.style.position = 'absolute';
+					iframe.style.top = '0'
+					iframe.style.left = '0'
+				}, 1000)
+			},
+			nextPlay: function(uid) {
+				var self = this;
+				var el = document.getElementById('card');
+				var val = (!el ? null : el.value);
+				uid = (!uid ? localStorage.getItem('__cardgame_uid__') : uid);
+				if (!name) {
+					return self.openModal();
 				}
-			}
-		}
+				if (!val) return;
+				$.post(`/play/${uid}/${val}`, function(err, result) {
+					if (err) {
+						console.log(err);
+						return;
+					}
+					$.post('/notbusy?q='+uid+'', function(err, result) {
+						if (err) {
+							console.log(err);
+							return;
+						}
+					})
+				})
+				
+			},
+			openModal: function() {
+				var self = this;
+				self.modal = true;
+			},
+			localStorageName: function() {
+				var self = this;
+				var nameInput = document.getElementById('uid');
+				var name = encodeURIComponent(nameInput.value);
+				localStorage.setItem('__cardgame_uid__', name);
+				self.modal = false;
+				return self.getPlay(name)
+			},
+			//https://bost.ocks.org/mike/shuffle/
+			shuffle: function(array) {
+				var m = array.length, t, i;
+
+				// While there remain elements to shuffle…
+				while (m) {
+
+					// Pick a remaining element…
+					i = Math.floor(Math.random() * m--);
+
+					// And swap it with the current element.
+					t = array[m];
+					array[m] = array[i];
+					array[i] = t;
+				}
+
+				return array;
+			}}
+			
+			
+		)
+		
 	})
