@@ -12,9 +12,6 @@ app.set('views', path.join('.', 'views'));
 app.set('view engine', 'pug');
 app.use(express.static(path.join('.', 'public')));
 app.use(favicon(path.join('.', 'public/img', 'favicon.ico')));
-app.locals.$ = jQuery;
-app.locals.appTitle = 'Cardgame';
-app.locals.appUrl = (process.env.NODE_ENV==='production' ? process.env.APP_URL : `http://localhost:${process.env.PORT}`);
 app.use(helmet());
 app.use(helmet.noCache());
 
@@ -24,6 +21,90 @@ const play = {
 	currentPlay: ''
 }
 
+app.use((req, res, next)=> {
+	req.app.locals.appUrl = (process.env.NODE_ENV==='production' ? process.env.APP_URL : `http://localhost:${process.env.PORT}`);
+	app.locals.$ = jQuery;
+	app.locals.appTitle = 'Cardgame';
+	return next();
+})
+
+app.get('/unload', async (req, res, next) => {
+	var keys = Object.keys(app.locals);
+	console.log(keys);
+	await keys.forEach((key) => {
+		if (key !== 'settings' && key !== '$') {
+			delete app.locals[key]
+		}
+	})
+	return res.redirect('/')
+})
+
+app.post('/env', async(req, res, next) => {
+	const v = process.env.V;
+	return res.status(200).send(v);
+})
+
+app.get('/invite/:uid', (req, res, next) => {
+	var players = (!app.locals.players ? [] : app.locals.players);
+	if (players.indexOf(req.params.uid) === -1) {
+		players.push(req.params.uid);
+	}
+	app.locals.players = players;
+	// console.log(app.locals.cards)
+	return res.render('main', {
+		players: app.locals.players,
+		info: app.locals.info,
+		play: app.locals.play,
+		busy: false,
+		cards: app.locals.cards,
+		inprogress: app.locals.inprogress,
+		guestlist: app.locals.guestlist,
+		discard: app.locals.discard,
+		turnIndex: app.locals.turnIndex
+		// avatar: app.locals.avatar
+	})
+	// const mailgun = require("mailgun-js");
+	// const mg = mailgun({apiKey: process.env.MG_KEY, domain: process.env.MG_DOMAIN});
+	// const list = 'tracey.bushman@gmail.com'//decodeURIComponent(req.params.list);
+	// const gameurl = req.app.locals.appUrl
+	// const data = {
+	// 	from: 'Cardgame with family <tbushman@mg.bli.sh>',
+	// 	to: list,
+	// 	subject: 'Card game invite',
+	// 	text: 'Join the game in progress: '+gameurl
+	// 	//`<a href="${gameurl}" target="_blank">Click here to join the card game!</a>`
+	// };
+	// mg.messages().send(data, function (error, body) {
+	// 	console.log(body);
+	// });
+})
+
+app.post('/invite/:guestlist', async(req, res, next) => {
+	const mailgun = require("mailgun-js");
+	const mg = mailgun({apiKey: process.env.MG_KEY, domain: process.env.MG_DOMAIN});
+	const list = decodeURIComponent(req.params.guestlist).split(/\,\s{0,3}/) //JSON.parse(JSON.stringify(decodeURIComponent(req.params.guestlist)));
+	console.log(list);
+	let b = null;
+	await list.forEach((item) => {
+		const gameurl = req.app.locals.appUrl + '/invite/' + encodeURIComponent(item)
+		const data = {
+			from: 'Cardgame with family <tbushman@mg.bli.sh>',
+			to: item,
+			subject: 'Card game invite',
+			text: 'Join the game in progress: '+gameurl
+			//`<a href="${gameurl}" target="_blank">Click here to join the card game!</a>`
+		};
+		mg.messages().send(data, function (error, body) {
+			console.log(body);
+			b = body;
+		});
+	})
+	app.locals.guestlist = list;
+	app.locals.inprogress = true;
+	return res.status(200).send('ok')
+
+	
+})
 app.get('/reset', (req, res, next) => {
 	// redirected from 500 error
 	delete app.locals.play;
@@ -35,18 +116,52 @@ app.get('/reset', (req, res, next) => {
 
 app.get('/', (req, res, next) => {
 	return res.render('main', {
+		players: app.locals.players,
 		info: app.locals.info,
 		play: app.locals.play,
 		busy: false,
-		cards: app.locals.cards
+		cards: app.locals.cards,
+		inprogress: app.locals.inprogress,
+		playerhands: app.locals.playerhands,
+		discard: app.locals.discard,
+		turnIndex: app.locals.turnIndex
 		// avatar: app.locals.avatar
 	})
 })
 
+app.get('/deal', async (req, res, next) => {
+  return res.status(200).send('setup deal')
+})
+
 app.post('/save/:cards', async(req,res,next)=>{
-	console.log(decodeURIComponent(req.params.cards))
 	app.locals.cards = JSON.parse(decodeURIComponent(req.params.cards));
 	return res.status(200).send(app.locals.cards)
+})
+
+app.post('/playerhands/:hands', async(req, res, next) => {
+	console.log(decodeURIComponent(req.params.hands))
+	app.locals.playerhands = JSON.parse(decodeURIComponent(req.params.hands));
+	return res.status(200).send(app.locals.playerhands)
+})
+
+app.post('/playerleave/:uid', async(req, res, next) => {
+	console.log('player leaving');
+	const players = app.locals.players;
+	if (players && players.indexOf(req.params.uid) !== -1) {
+		players.splice(players.indexOf(req.params.uid), 1);
+	}
+	console.log(req.params.uid)
+	app.locals.players = players;
+	return res.status(200).send(players);
+})
+
+app.post('/player/:uid', async(req, res, next) => {
+	var players = (!app.locals.players ? [] : app.locals.players);
+	if (players.indexOf(req.params.uid) === -1) {
+		players.push(req.params.uid);
+	}
+	app.locals.players = players;
+	return res.status(200).send(players)
 })
 
 app.post('/play/:uid/:card', async(req, res, next) => {
@@ -75,20 +190,26 @@ app.post('/play/:uid/:card', async(req, res, next) => {
 })
 
 // polled in half-second increments for front-end reactive button state
-app.post('/check', (req, res, next) => {
-	if (app.locals.busy) {
-		return res.status(200).send({
-			busy: app.locals.busy,
-			play: app.locals.play,
-			// avatar: app.locals.avatar
-		});
-	} else {
-		return res.status(200).send({
-			busy: false,
-			play: app.locals.play,
-			// avatar: app.locals.avatar
-		});
-	}
+app.post('/check/:locals', (req, res, next) => {
+	// console.log(req.params.locals, app.locals)
+	const locals = (!req.params.locals || req.params.locals === 'null' ? app.locals : JSON.parse(decodeURIComponent(req.params.locals)));
+	return res.status(200).send({
+		busy: locals.busy,
+		play: locals.play,
+		players: locals.players,
+		info: locals.info,
+		cards: locals.cards,
+		discard: locals.discard,
+		inprogress: locals.inprogress,
+		playerhands: locals.playerhands,
+		turnIndex: app.locals.turnIndex
+		// avatar: app.locals.avatar
+	});
+})
+
+app.post('/inprogress/:bool', (req, res, next) => {
+	app.locals.inprogress = Boolean(req.params.bool);
+	return res.status(200).send(app.locals.inprogress)
 })
 
 app.post('/notbusy', (req, res, next) => {

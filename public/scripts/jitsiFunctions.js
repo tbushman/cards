@@ -5,16 +5,11 @@ var jitsiFunctions = {
 			openBridgeChannel: true,
 		}
 		
-		self.room = self.connection.initJitsiConference('conference', confOptions)
-	},
-	unload: function() {
-		var self = this;
-		for (let i = 0; i < self.localTracks.length; i++) {
-			self.localTracks[i].dispose();
-		}
-		// self.room.leave();
-		// self.connection.disconnect();
-		self.api.dispose()
+		self.room = self.connection.initJitsiConference('conference', confOptions);
+		// self.api.addEventListener('participantJoined', function(item) {
+		// 	console.log('participant joined')
+		// 	console.log(item)
+		// })
 	},
 	switchVideo: function() { // eslint-disable-line no-unused-vars
 		var self = this;

@@ -4,49 +4,102 @@ block header
 block content
 	
 	div.centerallwrap#vue
-		
+		div#meeting(style="float:left;" :style="{width: (!res ? '45%' : '100%'), display:(!api ? 'none' : 'block')}")
+
 		.ui(v-if="play")
 			//- img(src= avatar)
 			//- img(v-if="play && play.name", :src="avatar",
 			//- 	@mouseover="hovOver(play.name)", @mouseleave="hovLeave"
 			//- )
 			p(v-text="play.name")
-		div.centerall(@resize="getBubbleSize()")
-			#modal.centerallwrap.tb-10-m0(v-if="modal", style="position: absolute;")
-				div.centarall
-					label(v-text="'Your name / nickname'")
-					input#uid(:value="(!user? '' : user.name)")
-					a.row(role="button", @click="localStorageName", v-text="'submit'")
-			//:style="{'enable-background':('new 0 0 ' + (wih - 90) + ' ' + (wih - 90)), width: (wiw + 'px'), position: 'absolute'}",
-			//preserveAspectRatio="none", 
-			div.tb-10-m0.tb-07-m2.centerallwrap(style="height:calc(100% - 90px);")
-				svg(version="1.1", width="100%", xmlns="http://www.w3.org/2000/svg", xmlns:xlink="http://www.w3.org/1999/xlink", x="0px", y="0px", 
-				:viewBox="(wiw <= 1000 ? '0 0 ' + (wiw - 90) + ' ' + ((wih - 90) - 90) +'' : '0 0 ' + ((wiw - 90) * .7) + ' ' + ((wih - 90) - 90) +'')", 
-				style="position: absolute;",
-				xml:space="preserve")
-					defs
-						clipPath#clipPath
-							path(v-if="bubblesize", :transform="bubblesize", d="M465.9,77.4c8.6-8.2,14-19.7,14-32.5c0-24.8-20.1-44.9-44.9-44.9c-12.8,0-24.3,5.4-32.5,13.9 C394.2,5.4,382.7,0,369.9,0c-12.8,0-24.3,5.4-32.5,13.9C329.2,5.4,317.7,0,304.9,0c-12.8,0-24.3,5.4-32.5,13.9 C264.2,5.4,252.7,0,239.9,0c-12.8,0-24.3,5.4-32.5,13.9C199.2,5.4,187.7,0,174.9,0c-12.8,0-24.3,5.4-32.5,13.9 C134.2,5.4,122.7,0,109.9,0C97.1,0,85.6,5.4,77.4,13.9C69.2,5.4,57.7,0,44.9,0C20.1,0,0,20.1,0,44.9c0,12.8,5.4,24.3,14,32.5 C5.4,85.6,0,97.1,0,109.9c0,12.8,5.4,24.3,14,32.5C5.4,150.6,0,162.2,0,175c0,12.8,5.4,24.3,14,32.5C5.4,215.7,0,227.2,0,240 c0,12.8,5.4,24.3,14,32.5C5.4,280.7,0,292.2,0,305c0,12.8,5.4,24.3,14,32.5c-8.6,8.2-14,19.7-14,32.5c0,12.8,5.4,24.3,14,32.5 c-8.6,8.2-14,19.7-14,32.5C0,459.9,20.1,480,44.9,480c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9 c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9 c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9 c12.8,0,24.3-5.4,32.5-13.9c8.2,8.6,19.7,13.9,32.5,13.9c24.8,0,44.9-20.1,44.9-44.9c0-12.8-5.4-24.3-14-32.5 c8.6-8.2,14-19.7,14-32.5c0-12.8-5.4-24.3-14-32.5c8.6-8.2,14-19.7,14-32.5c0-12.8-5.4-24.3-14-32.5c8.6-8.2,14-19.7,14-32.5 c0-12.8-5.4-24.3-14-32.5c8.6-8.2,14-19.7,14-32.5c0-12.8-5.4-24.3-14-32.5c8.6-8.2,14-19.7,14-32.5 C479.8,97.1,474.4,85.6,465.9,77.4z")
-				//- div.tb-10-m0.tb-07-m2.centerallwrap(style="height:calc(100% - 90px);")
-			
-				div.bubble.centerall#meeting
-					
-				//- (v-if="play")
-				//- 	p.loltxt(v-text="play.currentPlay")
-				//- div.centerallwrap(v-if="cards && cards.length > 0")
-				div.bubble.centerall(v-if="cards && cards.length > 0")
-					img(v-for="(card, i) in cards" :src="'/images/'+card+'.svg'" style="position:absolute;width:100%;height:auto;" :style="{transform:'rotate('+(i*10)+'deg) scale(0.5)', 'transform-origin': 'bottom left'}")
-			div.tb-10-m0(style="transform: translateY(-5px);")
+		
+		
+		div.centerall(@resize="getBubbleSize()" style="float:right;" :style="{width: (!res ? '42%' : '100%'), padding: (!res ? '45px' : '0'), padding: (!res ? 'var(--thumbw)' : '0')}")
+			#modal.centerallwrap.tb-10-m0(v-if="modal" style="height:25%;float:none;")
 				div.row
-					button(
-						v-if="!busy"
-						:class="(!play.name ? '' : 'btn')"
-						@click="(!play.name ? startPlay($event) : nextPlay($event))"
-						v-text="(!play.name ? 'Start game' : 'Deal')"
-						:style="{display: (!play.name ? 'inline-block' : 'inherit'), margin: (!play.name ? '0' : '0 auto'), 'padding': (!play.name ? '10px' : '12px 20px 20px 20px')}"
+					label(v-text="'Your e-mail address'")
+					input#uid.tb-10-m0(type="email" v-model="uid")
+					button.tb-10-m0(@click="localStorageName()", v-text="'submit'")
+				//:style="{'enable-background':('new 0 0 ' + (wih - 90) + ' ' + (wih - 90)), width: (wiw + 'px'), position: 'absolute'}",
+				//preserveAspectRatio="none", 
+					
+
+					//- div.tb-10-m0.tb-07-m2
+				
+			div.row.centerallwrap(v-if="cards && cards.length > 0" :style="{height: (!api ? '33%' : 'auto')}" style="position:relative;")
+				div.tb-10-m0(
+					v-if="api && players.indexOf(uid) === 0 && !guestlistCollapse"
+					:style="{'padding-right': (!res ? '10px' : '0')}")
+					label(for="guestlist") Guestlist
+					input#guestlist.row(type="text" v-model="guestlist")
+					p(v-text="'Enter e-mail addresses, separated by commas'")
+					div.row
+						button(
+							:class="(!api ? 'tb-10-m0' : 'tb-04-m0')"
+							@click="sendInvites()" 
+							v-text="'Send invites'"
+							style="float:none;"
+						)
+						div(:class="(!api ? 'tb-10-m0' : 'tb-02-m0')")
+						button(
+							:class="(!api ? 'tb-10-m0' : 'tb-04-m0')"
+							@click="toggleGuestlist" 
+							v-text="'Cancel'"
+							style="padding-right:0;"
+						)
+				
+				button#play(
+					v-if="!busy"
+					:class="(!api ? 'tb-10-m0' : 'tb-03-m0')"
+					@click="(!api ? startPlay($event) : (players.indexOf(uid) === 0 ? initDeal($event) : nothing) )"
+					v-text="(!api ? (players.length === 1 ? 'Start game' : 'Join game') : 'Deal')"
+					style="float: left;"
+					:style="{display: (players.indexOf(uid) === 0 && !playerhands[uid] ? 'inline-block' : 'none'), margin: (!play.name ? '10px 0 0 0!important' : '10px auto!important'), 'padding': (!play.name ? '10px' : '12px 20px 20px 20px')}"
+				)
+				button(
+					:class="(!api ? 'tb-10-m0' : 'tb-03-m0')"
+					v-if="guestlistCollapse" 
+					v-text="'Invite players'" 
+					@click="toggleGuestlist"
+					style="float:none;margin:10px 5%!important;"
+				)
+				button#end(
+					:class="(!api ? 'tb-10-m0' : 'tb-03-m0')"
+					v-text="(!api ? 'End game' : (players.indexOf(uid) === 0 ? 'End call' : 'Leave call'))"
+					@click="(players.indexOf(uid) === 0 ? unload() : leave())"
+					style="margin: 10px 0!important;"
+					:style="{float:(!guestlistCollapse ? 'right' : 'none')}"
+				)
+			div.row.centerallwrap(v-if="cards && cards.length > 0" style="position:relative;height:33%;")
+				div.tb-05-m0#cards(style="height:100%;position:relative;")
+					//- div(style="margin: 0 auto;position:relative;height:100%;")
+					//- :src="'/images/1B.svg'" 
+					img(
+							v-for="(card, i) in cards" 
+							:id="'card'+i"
+							:src="'/images/'+card+'.svg'" 
+							style="position:absolute;width:auto;height:72%;bottom:15px;right:10px;" 
+							:style="{transform:'translate(-'+(i*0.25)+'px,-'+(i*0.25)+'px)'}"
+							@click="draw()"
+						)
+				div.tb-05-m0#discard(style="height:100%;")
+					div.row(style="margin:0 auto;position:relative;height:90%;border:1px solid black;")
+						div(
+							style="position:absolute;width:100%;height:100%;right:0;bottom:10px;" 
+							@click="discardActive"
+						)
+						img(
+							v-for="(card, i) in discard" 
+							:src="'/images/'+card+'.svg'" 
+							style="position:absolute;width:50%;height:70%;right:0;bottom:10px;" 
+							:style="{transform:'translate(-'+(i*0.25)+'px,-'+(i*0.25)+'px)'}"
+						)
+			div#hand.row.centerallwrap(v-if="playerhands[uid]" style="position:relative;height:33%;")
+				div.tb-01-m0(v-for="(c,k) in playerhands[uid]" style="width:16.6%;")
+					img(
+						:src="'/images/'+c+'.svg'" 
+						style="height: auto; width: 90%;" 
+						:style="{border: (teed === c ? '2px solid red' : '0px solid rgba(255,255,255,0)')}"
+						@click="tee(c, k)"
 					)
-					p(v-if="busy", v-text="appTitle+' in use. Please wait.'")
-					button.tb-10-m0(v-text="'stop'", @click="unload")
-
-
 				

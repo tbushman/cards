@@ -28,6 +28,10 @@ body {
 	background-color: var(--primary);
 }
 
+#meeting {
+	pointer-events: auto;
+}
+
 .tb-font-xxs {
 	font-size: calc(45px / 3.7);
 	font-size: calc(var(--thumbw) / 3.7);
@@ -71,7 +75,7 @@ body {
 *[class^='tb-1'], *[class^='tb-0'] {
 	padding-right: 10px;
 	display: inline-block;
-	margin: 0 auto;
+	margin: 10px auto;
 	box-sizing: border-box;
 	overflow-x: hidden;
 	overflow-y: hidden;
@@ -120,6 +124,7 @@ body {
 .clear {
 	display: none;
 }
+
 button {
 	border: 0;
 	font-style: normal;
@@ -139,6 +144,10 @@ button:hover {
 	background-color: #9e1f63;
 	background-color: var(--highlight);
 	color: #fff;
+}
+
+input {
+	padding: 10px;
 }
 
 .ui {

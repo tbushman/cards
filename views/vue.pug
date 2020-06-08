@@ -13,6 +13,8 @@ script(type="text/javascript").
 				res: window.innerWidth < 600,
 				api: null,
 				info: (this.parseObj(!{JSON.stringify(info)}) === '' ? this.parseObj(!{JSON.stringify(appTitle)}) : this.parseObj(!{JSON.stringify(info)})),
+				players: this.parseObj(!{JSON.stringify(players)}),
+				playerhands: this.parseObject(!{JSON.stringify(playerhands)}),
 				play: this.parseObj(!{JSON.stringify(play)}),
 				busy: this.parseBool(!{JSON.stringify(busy)}),
 				hov: '',
@@ -24,11 +26,11 @@ script(type="text/javascript").
 				bubblesize: null,
 				modal: false,
 				suits: ['heart', 'club', 'diamond', 'spade'],
-				cards: this.parseObj(!{JSON.stringify(cards)}),
+				cards: this.parseArr(!{JSON.stringify(cards)}),
 				decka: [],
 				deckb: [],
 				deckc: [],
-				discard: [],
+				discard: this.parseArr(!{JSON.stringify(discard)}),
 				connection: null,
 				room: null,
 				localTracks: [],
@@ -37,7 +39,16 @@ script(type="text/javascript").
 				isJoined: false,
 				isFirefox: (!navigator ? true : navigator.userAgent.includes('Firefox')),
 				isSafari: /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification)),
-				user: ''
+				user: '',
+				hand: [],
+				uid: (!localStorage.getItem('__cardgame_uid__') ? null : localStorage.getItem('__cardgame_uid__')),
+				whoseTurn: '',
+				turnIndex: 0,
+				teed: null,
+				inprogress: this.parseBool(!{JSON.stringify(inprogress)}),
+				invite: [],
+				guestlist: (!localStorage.getItem('__cardgame_guestlist__') ? '' : localStorage.getItem('__cardgame_guestlist__') ),
+				guestlistCollapse: false
 			}
 		},
 		updated: function() {
@@ -47,51 +58,167 @@ script(type="text/javascript").
 			var self = this;
 			clearTimeout(self.timeout);
 			clearInterval(self.interval);
+			
 			//- self.connection.disconnect()
-			self.unload()
+			if (self.players.indexOf(self.uid) !== 0) {
+				self.leave()
+			} else {
+				self.unload()
+			}
 		},
 		mounted: async function() {
 			var self = this;
 			self.getBubbleSize();
 			window.addEventListener('resize', self.handleResize);
-			self.interval = setInterval(function() {
-				$.post('/check', function(err, result) {
-					if (err) {
-						self.busy = false;
-						return;
-					} else {
-						if (result && result !== undefined) {
-							self.busy = result.busy;
-						} else {
-							self.busy = false;
-						}
-						self.play = result.play;
-					}
-				})
-			}, 500);
-			//- console.log(JitsiMeetJS)
-			//- if (!self.api) {
-			//- 	if (typeof self.getJitsiApi === 'function')	self.getJitsiApi()
-			//- }
-			if (!self.cards || self.cards === '' || self.cards === '[]') {
+			self.runCheck();
+			if (!self.cards || self.cards === '' || self.cards === '[]' || self.cards.length === 0) {
+				console.log('no cards')
 				self.getCards()
-				
+			
 			}
+			if (!self.players || self.players.length === 0) {
+				self.getPlayers();
+			}
+			if (!self.inprogress) {
+				
+			} else {
+				if (self.cards && self.cards.length > 0) {
+					self.startPlay();
+				}
+			}
+			
 		},
 		methods: Object.assign(jitsiFunctions, {
 			parseObj: function(obj) {
 				if (!obj) return '';
 				return obj;
 			},
+			parseObject: function(obj) {
+				if (!obj) return {};
+				return obj;
+			},
 			parseBool: function(bool) {
 				if (!bool) return false;
 				return bool;
 			},
-			hovOver: function(name) {
-				this.hov = name;
+			parseArr: function(arr) {
+				if (!arr) return []
+				return arr;
 			},
-			hovLeave: function() {
-				this.hov = ''
+			nothing: function() {
+				return;
+			},
+			unload: function() {
+				console.log('unloading jitsi api')
+				var self = this;
+				for (let i = 0; i < self.localTracks.length; i++) {
+					self.localTracks[i].dispose();
+				}
+				// self.room.leave();
+				// self.connection.disconnect();
+				self.api.dispose();
+				self.inprogress = false;
+				self.players.forEach(function(player){
+					$.post('/playerleave/'+encodeURIComponent(player), function(response) {
+						console.log(response)
+					})
+				})
+				self.players = [];
+				self.updateCheck()
+			},
+			leave: function() {
+				var self = this;
+				console.log(self.uid + 'leaving')
+				if (self.players.indexOf(self.uid) !== -1) {
+					self.players.splice(self.players.indexOf(self.uid), 1);
+					$.post('/playerleave/'+encodeURIComponent(self.uid), function(response) {
+						console.log(response)
+					})
+				}
+				if (self.api) {
+					self.api.dispose();
+				}
+				self.updateCheck()
+			},
+			toggleGuestlist: function() {
+				var self = this;
+				var collapsed = self.guestlistCollapse;
+				self.guestlistCollapse = !collapsed;
+			},
+			sendInvites: function() {
+				var self = this;
+				var guestlist = encodeURIComponent(self.guestlist);
+				console.log(guestlist)
+				$.post(`/invite/${guestlist}`, function(response){
+					localStorage.setItem('__cardgame_guestlist__', decodeURIComponent(guestlist))
+					self.guestlistCollapse = true
+				})
+			},
+			startPlayersPolling() {
+				var self = this;
+				self.interval = setInterval(function(){
+					self.getPlayers();
+					self.runCheck();
+				}, 30000);
+			},
+			updateCheck: function() {
+				var self = this;
+				var playerhands = {}
+				Object.keys(self.playerhands).forEach(function(uid){
+					playerhands[uid] = self.playerhands[uid]
+				})//JSON.parse(JSON.stringify(self.playerhands))
+				//- console.log(playerhands)
+				var locals = {
+					busy: self.busy,
+					players: self.players,
+					info: self.info,
+					cards: self.cards,
+					discard: self.discard,
+					inprogress: self.inprogress,
+					playerhands: playerhands,
+					turnIndex: self.turnIndex
+				}
+				//- console.log(locals)
+				$.post('/check/'+encodeURIComponent(JSON.stringify(locals)), function(result) {
+					//- console.log(result)
+					if (result && result !== undefined) {
+						var keys = Object.keys(result);
+						keys.forEach(function(k){
+							if (k === 'playerhands') {
+								Object.keys(result[k]).forEach(function(p){
+									self.playerhands[p] = result[k][p]
+								})
+							} else {
+								self[k] = result[k]
+								//- console.log(self[k], k)
+							}
+						})
+					} else {
+						self.busy = false;
+					}
+				})
+			},
+			runCheck: function() {
+				var self = this;
+				$.post('/check/'+null, function(result) {
+					//- console.log(result)
+					if (result && result !== undefined) {
+						var keys = Object.keys(result);
+						keys.forEach(function(k){
+							if (k === 'playerhands') {
+								Object.keys(result[k]).forEach(function(p){
+									self.playerhands[p] = result[k][p]
+								})
+							} else {
+								self[k] = result[k]
+								//- console.log(self[k], k)
+							}
+						})
+					} else {
+						self.busy = false;
+					}
+
+				})
 			},
 			handleResize: function() {
 				var self = this;
@@ -99,19 +226,38 @@ script(type="text/javascript").
 				self.wih = window.innerHeight;
 				self.getBubbleSize();
 			},
+			handleReset: function() {
+				var self = this;
+				self.cards = [];
+				self.getCards();
+			},
 			getBubbleSize: function() {
 				var self = this;
 				var initsize = 480;
-				var targetWidth = (!self.wiw <= 1000 ? (self.wiw - 90) : ((self.wiw - 90) * 0.7));
+				var targetWidth = (!self.res ? (self.wiw * 0.45) : self.wiw);
 				var diffW = targetWidth - initsize;
 				var perW = diffW / targetWidth;
 				var scaleW = 1 + perW;
-				var targetHeight = self.wih * 0.5;
+				var targetHeight = (!self.res ? self.wih : (self.wih * 0.3));
 				var diffH = targetHeight - initsize;
 				var perH = diffH / targetHeight;
 				var scaleH = 1 + perH;
 				self.bubblesize = 'scale('+scaleW+', '+scaleH+')';
-				self.framesize = [targetWidth-8,targetHeight-8]
+				self.framesize = [targetWidth,targetHeight-8]
+			},
+			getPlayers: function() {
+				var self = this;
+				if (!self.uid) {
+					if (window.location.href.split('invite/')[1]) {
+						self.uid = decodeURIComponent(window.location.href.split('invite/')[1])
+					} else {
+						return self.openModal()
+					}
+				}
+				$.post(`/player/${self.uid}`, function(response){
+					//- console.log(response)
+					self.players = response;
+				})
 			},
 			getCards: function(){
 				var self = this;
@@ -171,15 +317,70 @@ script(type="text/javascript").
 				})
 				var deckb = deck1;
 				var deckc = deck1;
-				var cards = self.shuffle(deck1.concat(deckb, deckc));
-				console.log(cards)
+				var jokera = ['jokerb', 'jokerr'];
+				var jokerb = ['jokerb', 'jokerr'];
+				var jokerc = ['jokerb', 'jokerr'];
+				
+				var cards = self.shuffle(deck1.concat(deckb, deckc, jokera, jokerb, jokerc));
+				self.cards = cards;
+				//- console.log(cards)
 				$.post(`/save/${encodeURIComponent(JSON.stringify(cards))}`, function(response){
 					self.cards = response;
+					self.updateCheck()
 				});
+			},
+			deal: async function() {
+				var self = this;
+				if (!self.players || self.players.length === 0) {
+					self.initDeal()
+				}
+				for (var i = 0; i < 6; i++) {
+					await self.players.forEach(function(player){
+						if (!self.playerhands[player] || !Array.isArray(self.playerhands[player])) {
+							self.playerhands[player] = [];
+						}
+						self.playerhands[player][i] = self.cards[self.cards.length-1];
+						self.cards.pop();
+					})
+				}
+				$.post('/playerhands/'+encodeURIComponent(JSON.stringify(self.playerhands)), function(result){
+					$.post('/save/'+encodeURIComponent(JSON.stringify(self.cards)), function(res){
+						self.updateCheck();
+					})
+				})
+
+			},
+			initDeal: function() {
+				var self = this;
+				if (!self.players || self.players.length === 0 || self.players.indexOf(self.uid) === -1) {
+					self.getPlayers();
+					setTimeout(function(){
+						self.deal();
+					},2000)
+				} else {
+					self.deal()
+				}
+			},
+			getUid: function() {
+				var self = this;
+				if (!self.uid) {
+					if (window.location.href.split('invite/')[1]) {
+						self.uid = decodeURIComponent(window.location.href.split('invite/')[1])
+					} else {
+						return self.openModal()
+					}
+				}
 			},
 			startPlay: function(e){
 				var self = this;
-				console.log(e)
+				//- console.log(e)
+				if (!self.uid) {
+					if (window.location.href.split('invite/')[1]) {
+						self.uid = decodeURIComponent(window.location.href.split('invite/')[1])
+					} else {
+						return self.openModal()
+					}
+				}
 				var domain = 'bli.sh';
 				var options = {
 					roomName: self.appTitle,
@@ -189,28 +390,67 @@ script(type="text/javascript").
 					// noSSL: false
 				};
 				self.api = new JitsiMeetExternalAPI(domain, options);
+				self.api.addEventListener('participantRoleChanged', function(response) {
+					console.log(response)
+				})
+
 				var iframe = document.getElementById(`jitsiConferenceFrame`)
 				setTimeout(function(){
 					iframe.style.position = 'absolute';
 					iframe.style.top = '0'
 					iframe.style.left = '0'
-				}, 1000)
+				}, 1000);
+				
+				if (!self.inprogress) {
+					$.post('/inprogress/true', function(result){
+						self.inprogress = result
+					})
+				} else {
+					
+				}
+				self.whoseTurn = self.players[self.turnIndex]
+				//- setTimeout(function(){
+				//- 	self.api.addEventListener('passwordRequired', () => {
+				//- 		$.post('/env', function(result){
+				//- 			self.api.executeCommand('password', result);
+				//- 		})
+				//- 	});
+				//- }, 2000)
+
+				self.startPlayersPolling()
+			},
+			tee: function(card, k) {
+				var self = this;
+				if (self.whoseTurn === self.uid) {
+					self.teed = card;
+				}
+			},
+			draw: function() {
+				var self = this;
+				self.playerhands[self.whoseTurn].push(self.cards[self.cards.length - 1]);
+				self.cards.pop();
+				self.updateCheck();
+			},
+			discardActive: function() {
+				var self = this;
+				if (self.teed) {
+					self.discard.push(self.teed);
+					self.playerhands[self.uid].splice(self.playerhands[self.uid].indexOf(self.teed));
+					self.turnIndex = (!self.players[self.turnIndex+1] ? 0 : self.players[self.turnIndex+1])
+					self.updateCheck();
+				}
 			},
 			nextPlay: function(uid) {
 				var self = this;
 				var el = document.getElementById('card');
 				var val = (!el ? null : el.value);
-				uid = (!uid ? localStorage.getItem('__cardgame_uid__') : uid);
-				if (!name) {
-					return self.openModal();
-				}
 				if (!val) return;
-				$.post(`/play/${uid}/${val}`, function(err, result) {
+				$.post(`/play/${self.uid}/${val}`, function(err, result) {
 					if (err) {
 						console.log(err);
 						return;
 					}
-					$.post('/notbusy?q='+uid+'', function(err, result) {
+					$.post('/notbusy?q='+self.uid+'', function(err, result) {
 						if (err) {
 							console.log(err);
 							return;
@@ -228,8 +468,12 @@ script(type="text/javascript").
 				var nameInput = document.getElementById('uid');
 				var name = encodeURIComponent(nameInput.value);
 				localStorage.setItem('__cardgame_uid__', name);
+				self.uid = name;
 				self.modal = false;
-				return self.getPlay(name)
+				if (!self.players || self.players.length === 0) {
+					self.getPlayers();
+				}
+				return self.startPlay(name)
 			},
 			//https://bost.ocks.org/mike/shuffle/
 			shuffle: function(array) {
