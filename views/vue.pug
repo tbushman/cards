@@ -48,7 +48,8 @@ script(type="text/javascript").
 				inprogress: this.parseBool(!{JSON.stringify(inprogress)}),
 				invite: [],
 				guestlist: (!localStorage.getItem('__cardgame_guestlist__') ? '' : localStorage.getItem('__cardgame_guestlist__') ),
-				guestlistCollapse: false
+				guestlistCollapse: true,
+				ready: false
 			}
 		},
 		updated: function() {
@@ -86,7 +87,6 @@ script(type="text/javascript").
 					self.startPlay();
 				}
 			}
-			
 		},
 		methods: Object.assign(jitsiFunctions, {
 			parseObj: function(obj) {
@@ -140,6 +140,20 @@ script(type="text/javascript").
 				}
 				self.updateCheck()
 			},
+			accountGuestlist: function() {
+				var self = this;
+				var guestlist = self.guestlist.split(/\,\s{0,3}/);
+				var present = self.players.filter(function(player){
+					return guestlist.indexOf(player) !== -1 
+					//self.playerhands[player].length > 0
+				});
+				//- Object.keys(self.playerhands).filter(function(player){
+				//- 	return self.playerhands[player].length > 0
+				//- });
+				console.log('present');
+				console.log(present);
+				self.ready = (present.length >= (guestlist.length - 1))
+			},
 			toggleGuestlist: function() {
 				var self = this;
 				var collapsed = self.guestlistCollapse;
@@ -157,6 +171,7 @@ script(type="text/javascript").
 			startPlayersPolling() {
 				var self = this;
 				self.interval = setInterval(function(){
+					self.accountGuestlist();
 					self.getPlayers();
 					self.runCheck();
 				}, 30000);

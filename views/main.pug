@@ -47,29 +47,30 @@ block content
 							v-text="'Cancel'"
 							style="padding-right:0;"
 						)
-				
-				button#play(
-					v-if="!busy"
-					:class="(!api ? 'tb-10-m0' : 'tb-03-m0')"
-					@click="(!api ? startPlay($event) : (players.indexOf(uid) === 0 ? initDeal($event) : nothing) )"
-					v-text="(!api ? (players.length === 1 ? 'Start game' : 'Join game') : 'Deal')"
-					style="float: left;"
-					:style="{display: (players.indexOf(uid) === 0 && !playerhands[uid] ? 'inline-block' : 'none'), margin: (!play.name ? '10px 0 0 0!important' : '10px auto!important'), 'padding': (!play.name ? '10px' : '12px 20px 20px 20px')}"
-				)
-				button(
-					:class="(!api ? 'tb-10-m0' : 'tb-03-m0')"
-					v-if="guestlistCollapse" 
-					v-text="'Invite players'" 
-					@click="toggleGuestlist"
-					style="float:none;margin:10px 5%!important;"
-				)
-				button#end(
-					:class="(!api ? 'tb-10-m0' : 'tb-03-m0')"
-					v-text="(!api ? 'End game' : (players.indexOf(uid) === 0 ? 'End call' : 'Leave call'))"
-					@click="(players.indexOf(uid) === 0 ? unload() : leave())"
-					style="margin: 10px 0!important;"
-					:style="{float:(!guestlistCollapse ? 'right' : 'none')}"
-				)
+				//display: (players.indexOf(uid) === 0 && !playerhands[uid] ? 'inline-block' : 'none')
+				div.row
+					button#play(
+						v-if="!busy && ready"
+						:class="(!api ? (!res ? 'tb-03-m0' : 'tb-10-m0') : 'tb-03-m0')"
+						@click="(!api ? startPlay($event) : (players.indexOf(uid) === 0 && !playerhands[uid] ? initDeal($event) : nothing) )"
+						v-text="(!api ? (players.length === 1 ? 'Start game' : 'Join game') : 'Deal')"
+						style="float: left;"
+						:style="{display: (players.indexOf(uid) === 0 ? 'inline-block' : 'inherit'), margin: (!play.name ? '10px 0 0 0!important' : '10px auto!important'), 'padding': (!play.name ? '10px' : '12px 20px 20px 20px')}"
+					)
+					button(
+						:class="(!api ? (!res ? 'tb-03-m0' : 'tb-10-m0') : 'tb-03-m0')"
+						v-if="guestlistCollapse && players.indexOf(uid) === 0 " 
+						v-text="'Invite players'" 
+						@click="toggleGuestlist"
+						style="float:none;margin:10px 5%!important;"
+					)
+					button#end(
+						:class="(!api ? (!res ? 'tb-03-m0' : 'tb-10-m0') : 'tb-03-m0')"
+						v-text="(!api ? 'End game' : (players.indexOf(uid) === 0 ? 'End call' : 'Leave call'))"
+						@click="(players.indexOf(uid) === 0 ? unload() : leave())"
+						style="margin: 10px 0!important;"
+						:style="{float:(!guestlistCollapse ? 'right' : 'none')}"
+					)
 			div.row.centerallwrap(v-if="cards && cards.length > 0" style="position:relative;height:33%;")
 				div.tb-05-m0#cards(style="height:100%;position:relative;")
 					//- div(style="margin: 0 auto;position:relative;height:100%;")
@@ -79,11 +80,11 @@ block content
 							:id="'card'+i"
 							:src="'/images/'+card+'.svg'" 
 							style="position:absolute;width:auto;height:72%;bottom:15px;right:10px;" 
-							:style="{transform:'translate(-'+(i*0.25)+'px,-'+(i*0.25)+'px)'}"
+							:style="{transform:'translate(-'+(i*0.05)+'px,-'+(i*0.05)+'px)'}"
 							@click="draw()"
 						)
 				div.tb-05-m0#discard(style="height:100%;")
-					div.row(style="margin:0 auto;position:relative;height:90%;border:1px solid black;")
+					div.row(style="margin:0 auto;position:relative;width:50%;height:80%;border:1px solid black;")
 						div(
 							style="position:absolute;width:100%;height:100%;right:0;bottom:10px;" 
 							@click="discardActive"
@@ -92,7 +93,7 @@ block content
 							v-for="(card, i) in discard" 
 							:src="'/images/'+card+'.svg'" 
 							style="position:absolute;width:50%;height:70%;right:0;bottom:10px;" 
-							:style="{transform:'translate(-'+(i*0.25)+'px,-'+(i*0.25)+'px)'}"
+							:style="{transform:'translate(-'+(i*0.05)+'px,-'+(i*0.05)+'px)'}"
 						)
 			div#hand.row.centerallwrap(v-if="playerhands[uid]" style="position:relative;height:33%;")
 				div.tb-01-m0(v-for="(c,k) in playerhands[uid]" style="width:16.6%;")
