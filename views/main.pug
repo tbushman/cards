@@ -4,6 +4,8 @@ block header
 block content
 	
 	div.centerallwrap#vue
+		div#msg(style="position: fixed;top:10px;right:10px;")
+			p(v-text='whoseTurn+"\'s turn"')
 		div#meeting(style="float:left;" :style="{width: (!res ? '45%' : '100%'), display:(!api ? 'none' : 'block')}")
 
 		.ui(v-if="play")
@@ -15,7 +17,7 @@ block content
 		
 		
 		div.centerall(@resize="getBubbleSize()" style="float:right;" :style="{width: (!res ? '42%' : '100%'), padding: (!res ? '45px' : '0'), padding: (!res ? 'var(--thumbw)' : '0')}")
-			#modal.centerallwrap.tb-10-m0(v-if="modal" style="height:25%;float:none;")
+			#modal.centerallwrap.tb-10-m0(v-if="modal" style="height:auto;float:none;")
 				div.row
 					label(v-text="'Your e-mail address'")
 					input#uid.tb-10-m0(type="email" v-model="uid")
@@ -32,7 +34,7 @@ block content
 					:style="{'padding-right': (!res ? '10px' : '0')}")
 					label(for="guestlist") Guestlist
 					input#guestlist.row(type="text" v-model="guestlist")
-					p(v-text="'Enter e-mail addresses, separated by commas'")
+					p(v-text="'Enter e-mail addresses (including yours), separated by commas'")
 					div.row
 						button(
 							:class="(!api ? 'tb-10-m0' : 'tb-04-m0')"
@@ -48,14 +50,23 @@ block content
 							style="padding-right:0;"
 						)
 				//display: (players.indexOf(uid) === 0 && !playerhands[uid] ? 'inline-block' : 'none')
+				//- :style="{margin: (!play.name ? '10px 0 0 10px!important' : '10px auto!important'), 'padding': (!play.name ? '10px' : '12px 20px 20px 20px')}"
+
 				div.row
 					button#play(
-						v-if="!busy && ready"
+						v-if="!busy && !ready"
 						:class="(!api ? (!res ? 'tb-03-m0' : 'tb-10-m0') : 'tb-03-m0')"
-						@click="(!api ? startPlay($event) : (players.indexOf(uid) === 0 && !playerhands[uid] ? initDeal($event) : nothing) )"
-						v-text="(!api ? (players.length === 1 ? 'Start game' : 'Join game') : 'Deal')"
-						style="float: left;"
-						:style="{display: (players.indexOf(uid) === 0 ? 'inline-block' : 'inherit'), margin: (!play.name ? '10px 0 0 0!important' : '10px auto!important'), 'padding': (!play.name ? '10px' : '12px 20px 20px 20px')}"
+						@click="(!api ? startPlay($event) : nothing )"
+						v-text="(players.length === 1 ? 'Start game' : 'Join game')"
+						style="float: left;margin:10px 5% 0 0!important;"
+					)
+					//- :style="{margin: (!play.name ? '10px 0 0 10px!important' : '10px auto!important'), 'padding': (!play.name ? '10px' : '12px 20px 20px 20px')}"
+					button#deal(
+						v-if="!busy && ready && api && players.indexOf(uid) === 0 && !playerhands[uid]"
+						:class="(!res ? 'tb-03-m0' : 'tb-10-m0')"
+						@click="initDeal($event)"
+						v-text="'Deal'"
+						style="float: left;margin:10px 5% 0 0!important;"
 					)
 					button(
 						:class="(!api ? (!res ? 'tb-03-m0' : 'tb-10-m0') : 'tb-03-m0')"

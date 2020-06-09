@@ -47,7 +47,7 @@ script(type="text/javascript").
 				teed: null,
 				inprogress: this.parseBool(!{JSON.stringify(inprogress)}),
 				invite: [],
-				guestlist: (!localStorage.getItem('__cardgame_guestlist__') ? '' : localStorage.getItem('__cardgame_guestlist__') ),
+				guestlist: (!localStorage.getItem('__cardgame_guestlist__') ? [localStorage.getItem('__cardgame_uid__')] : localStorage.getItem('__cardgame_guestlist__') ),
 				guestlistCollapse: true,
 				ready: false
 			}
@@ -142,17 +142,22 @@ script(type="text/javascript").
 			},
 			accountGuestlist: function() {
 				var self = this;
-				var guestlist = self.guestlist.split(/\,\s{0,3}/);
-				var present = self.players.filter(function(player){
-					return guestlist.indexOf(player) !== -1 
-					//self.playerhands[player].length > 0
-				});
-				//- Object.keys(self.playerhands).filter(function(player){
-				//- 	return self.playerhands[player].length > 0
-				//- });
-				console.log('present');
-				console.log(present);
-				self.ready = (present.length >= (guestlist.length - 1))
+				
+				if (typeof self.guestlist.split === 'function') {
+						var guestlist = self.guestlist.split(/\,\s{0,3}/);
+						var present = self.players.filter(function(player){
+							return guestlist.indexOf(player) !== -1 
+							//self.playerhands[player].length > 0
+						});
+						//- Object.keys(self.playerhands).filter(function(player){
+						//- 	return self.playerhands[player].length > 0
+						//- });
+						console.log('present');
+						console.log(present);
+						self.ready = (present.length === guestlist.length)
+				} else {
+					self.guestlist = self.players.join(', ')
+				}
 			},
 			toggleGuestlist: function() {
 				var self = this;
@@ -174,15 +179,20 @@ script(type="text/javascript").
 					self.accountGuestlist();
 					self.getPlayers();
 					self.runCheck();
-				}, 30000);
+				}, 2000);
 			},
-			updateCheck: function() {
+			updateCheck: function(untee) {
 				var self = this;
 				var playerhands = {}
 				Object.keys(self.playerhands).forEach(function(uid){
 					playerhands[uid] = self.playerhands[uid]
 				})//JSON.parse(JSON.stringify(self.playerhands))
 				//- console.log(playerhands)
+				if (untee) {
+					self.turnIndex = (!self.players[self.turnIndex+1] ? 0 : (self.turnIndex + 1));
+					self.whoseTurn = self.players[self.turnIndex];
+
+				}
 				var locals = {
 					busy: self.busy,
 					players: self.players,
@@ -207,7 +217,12 @@ script(type="text/javascript").
 								self[k] = result[k]
 								//- console.log(self[k], k)
 							}
-						})
+						});
+						if (untee) {
+							setTimeout(function(){
+								self.teed = null;
+							}, 2000);
+						}
 					} else {
 						self.busy = false;
 					}
@@ -215,25 +230,27 @@ script(type="text/javascript").
 			},
 			runCheck: function() {
 				var self = this;
-				$.post('/check/'+null, function(result) {
-					//- console.log(result)
-					if (result && result !== undefined) {
-						var keys = Object.keys(result);
-						keys.forEach(function(k){
-							if (k === 'playerhands') {
-								Object.keys(result[k]).forEach(function(p){
-									self.playerhands[p] = result[k][p]
-								})
-							} else {
-								self[k] = result[k]
-								//- console.log(self[k], k)
-							}
-						})
-					} else {
-						self.busy = false;
-					}
+				if (!self.teed) {
+					$.post('/check/'+null, function(result) {
+						//- console.log(result)
+						if (result && result !== undefined) {
+							var keys = Object.keys(result);
+							keys.forEach(function(k){
+								if (k === 'playerhands') {
+									Object.keys(result[k]).forEach(function(p){
+										self.playerhands[p] = result[k][p]
+									})
+								} else {
+									self[k] = result[k]
+									//- console.log(self[k], k)
+								}
+							})
+						} else {
+							self.busy = false;
+						}
 
-				})
+					})
+				}
 			},
 			handleResize: function() {
 				var self = this;
@@ -444,14 +461,13 @@ script(type="text/javascript").
 				var self = this;
 				self.playerhands[self.whoseTurn].push(self.cards[self.cards.length - 1]);
 				self.cards.pop();
-				self.updateCheck();
+				self.updateCheck(true);
 			},
 			discardActive: function() {
 				var self = this;
 				if (self.teed) {
 					self.discard.push(self.teed);
-					self.playerhands[self.uid].splice(self.playerhands[self.uid].indexOf(self.teed));
-					self.turnIndex = (!self.players[self.turnIndex+1] ? 0 : self.players[self.turnIndex+1])
+					self.playerhands[self.uid].splice(self.playerhands[self.uid].indexOf(self.teed), 1);
 					self.updateCheck();
 				}
 			},
@@ -481,7 +497,10 @@ script(type="text/javascript").
 			localStorageName: function() {
 				var self = this;
 				var nameInput = document.getElementById('uid');
-				var name = encodeURIComponent(nameInput.value);
+				var name = 
+				//- encodeURIComponent(
+					nameInput.value
+				//- );
 				localStorage.setItem('__cardgame_uid__', name);
 				self.uid = name;
 				self.modal = false;
