@@ -4,7 +4,7 @@
   "description": "Cabalistic_Necromancer",
   "main": "./app.js",
   "scripts": {
-    "test": "cross-env TEST_ENV=true RECORD_ENV=true mocha --require mocha-snapshots --require jsdom-global/register --update",
+    "test": "cross-env TEST_ENV=true RECORD_ENV=true mocha --require jsdom-global/register --require mocha-snapshots --update",
     "test-lock": "cross-env TEST_ENV=true RECORD_ENV=false mocha --require mocha-snapshots",
     "start": "nodemon"
   },
@@ -35,6 +35,7 @@
     "helmet": "^3.22.0",
     "jquery": "^3.5.1",
     "mailgun-js": "^0.22.0",
+    "marked": "^1.1.0",
     "pug": "^2.0.4",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.8",
@@ -49,6 +50,7 @@
     "jsdom-global": "^3.0.2",
     "mocha": "^7.1.2",
     "mocha-snapshots": "^4.2.0",
+    "mock-local-storage": "^1.1.12",
     "nock": "^10.0.6",
     "nock-record": "^0.3.4",
     "nodemon": "^1.19.4",
