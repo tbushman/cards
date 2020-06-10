@@ -1,5 +1,8 @@
-require('jsdom-global')();
-
+require('jsdom-global')({ resources: 'usable', runScripts: 'dangerously' });
+const Vue = require('vue');
+// const { shallowMount, mount } = require('@vue/test-utils');
+const { renderToString } = require('@vue/server-test-utils');
+const { mount } = require('@vue/test-utils');
 const chai = require('chai');
 const path = require('path');
 const nock = require('nock');
@@ -13,7 +16,8 @@ const $ = require('jquery');
 const cleanup = require('jsdom-global')();
 nockBack.setMode('record');
 
-const marked = require('marked');
+
+// const marked = require('marked');
 
 describe('API call', () => {
 	let key, gp, agent;
@@ -63,9 +67,26 @@ describe('API call', () => {
 		.get('/')
 		.expect(200)
 		.then(async(res) => {
-			console.log(res)
-			document.write(res.text)
-			expect(document.body.innerHTML).to.matchSnapshot();
+			// console.log(res)
+			document.write(res.text);
+			// console.log(Vue)
+			const vueEl = document.getElementById('vue');
+			// expect(window.vueEl.innerHTML).to.matchSnapshot();
+			// const wrapper = await mount(renderToString(res.text))
+			const frontEnd = {
+				data: function data() {
+					return {
+						html: vueEl
+					}
+				},
+				template: 
+				`
+				<div v-html="html"></div>
+				`
+			}
+			const wrapper = await mount(frontEnd)
+			expect(wrapper.text()).to.not.equal(null);
+			expect(wrapper).to.matchSnapshot();
 		})
 	});
   

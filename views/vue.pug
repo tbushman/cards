@@ -6,7 +6,7 @@ script(type="text/javascript").
 	//- Vue.prototype.moment = moment;
 	Vue.prototype.JitsiMeetExternalAPI = window.JitsiMeetExternalAPI;
 	Vue.prototype.localStorage = localStorage;
-	new Vue({
+	var vueEl = new Vue({
 		el: '#vue',
 		data: function data() {
 			return {
