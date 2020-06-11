@@ -32,17 +32,17 @@ app.get('/unload', async (req, res, next) => {
 	var keys = Object.keys(app.locals);
 	console.log(keys);
 	await keys.forEach((key) => {
-		if (key !== 'settings' && key !== '$') {
+		if (key !== 'settings' && key !== '$' && key !== 'guestlist') {
 			delete app.locals[key]
 		}
 	})
 	return res.redirect('/')
 })
 
-app.post('/env', async(req, res, next) => {
-	const v = process.env.V;
-	return res.status(200).send(v);
-})
+// app.post('/env', async(req, res, next) => {
+// 	const v = process.env.V;
+// 	return res.status(200).send(v);
+// })
 
 app.get('/invite/:uid', (req, res, next) => {
 	var players = (!app.locals.players ? [] : app.locals.players);
@@ -61,7 +61,7 @@ app.get('/invite/:uid', (req, res, next) => {
 		guestlist: app.locals.guestlist,
 		discard: app.locals.discard,
 		turnIndex: app.locals.turnIndex,
-		whoseTurn: locals.whoseTurn
+		whoseTurn: app.locals.whoseTurn
 
 		// avatar: app.locals.avatar
 	})
@@ -101,20 +101,20 @@ app.post('/invite/:guestlist', async(req, res, next) => {
 			b = body;
 		});
 	})
-	app.locals.guestlist = list;
+	app.locals.guestlist = list.join(', ');
 	app.locals.inprogress = true;
 	return res.status(200).send('ok')
 
 	
 })
-app.get('/reset', (req, res, next) => {
-	// redirected from 500 error
-	delete app.locals.play;
-	// app.locals.avatar = null;
-	app.locals.busy = false;
-	app.locals.info = 'Please try again.'
-	return res.redirect(307, '/');
-})
+// app.get('/reset', (req, res, next) => {
+// 	// redirected from 500 error
+// 	delete app.locals.play;
+// 	// app.locals.avatar = null;
+// 	app.locals.busy = false;
+// 	app.locals.info = 'Please try again.'
+// 	return res.redirect(307, '/');
+// })
 
 app.get('/', (req, res, next) => {
 	return res.render('main', {
@@ -122,6 +122,7 @@ app.get('/', (req, res, next) => {
 		info: app.locals.info,
 		play: app.locals.play,
 		busy: false,
+		guestlist: app.locals.guestlist,
 		cards: app.locals.cards,
 		inprogress: app.locals.inprogress,
 		playerhands: app.locals.playerhands,
@@ -132,16 +133,22 @@ app.get('/', (req, res, next) => {
 	})
 })
 
-app.get('/deal', async (req, res, next) => {
-  return res.status(200).send('setup deal')
-})
+// app.get('/deal', async (req, res, next) => {
+//   return res.status(200).send('setup deal')
+// })
 
 app.post('/save/:cards', async(req,res,next)=>{
+	if (!JSON.parse(decodeURIComponent(req.params.cards))) {
+		return next(new Error('no cards to save'))
+	}
 	app.locals.cards = JSON.parse(decodeURIComponent(req.params.cards));
 	return res.status(200).send(app.locals.cards)
 })
 
 app.post('/playerhands/:hands', async(req, res, next) => {
+	if (!JSON.parse(decodeURIComponent(req.params.hands))) {
+		return next(new Error('no playerhands to save'))
+	}
 	console.log(decodeURIComponent(req.params.hands))
 	app.locals.playerhands = JSON.parse(decodeURIComponent(req.params.hands));
 	return res.status(200).send(app.locals.playerhands)
@@ -167,37 +174,37 @@ app.post('/player/:uid', async(req, res, next) => {
 	return res.status(200).send(players)
 })
 
-app.post('/play/:uid/:card', async(req, res, next) => {
-	if (!app.locals.busy) {
-		delete app.locals.info;
-		app.locals.busy = true;
-		// app.locals.avatar = req.params.uid;
-		app.locals.play = {
-			currentPlay: req.params.card,
-			name: req.params.uid
-		}
-		app.locals.busy = false;
-		return res.status(200).send({
-			play: app.locals.play,
-			busy: app.locals.busy
-		});
-	} else {
-		return res.status(200).send(null
-			/*{
-			play: app.locals.play,
-			busy: true
-		}*/
-		)
-
-	}
-})
-
+// app.post('/play/:uid/:card', async(req, res, next) => {
+// 	if (!app.locals.busy) {
+// 		delete app.locals.info;
+// 		app.locals.busy = true;
+// 		// app.locals.avatar = req.params.uid;
+// 		app.locals.play = {
+// 			currentPlay: req.params.card,
+// 			name: req.params.uid
+// 		}
+// 		app.locals.busy = false;
+// 		return res.status(200).send({
+// 			play: app.locals.play,
+// 			busy: app.locals.busy
+// 		});
+// 	} else {
+// 		return res.status(200).send(null
+// 			/*{
+// 			play: app.locals.play,
+// 			busy: true
+// 		}*/
+// 		)
+// 
+// 	}
+// })
+// 
 // polled in half-second increments for front-end reactive button state
 app.post('/check/:locals', (req, res, next) => {
 	const noParams = !req.params.locals || req.params.locals === 'null';
 	const locals = (noParams ? app.locals : JSON.parse(decodeURIComponent(req.params.locals)));
 	if (!noParams) {
-		console.log(locals);
+		// console.log(locals);
 		Object.keys(locals).forEach((l) => {
 			app.locals[l] = locals[l]
 		})
@@ -209,6 +216,7 @@ app.post('/check/:locals', (req, res, next) => {
 		info: locals.info,
 		cards: locals.cards,
 		discard: locals.discard,
+		guestlist: locals.guestlist,
 		inprogress: locals.inprogress,
 		playerhands: locals.playerhands,
 		turnIndex: locals.turnIndex,
@@ -218,17 +226,20 @@ app.post('/check/:locals', (req, res, next) => {
 })
 
 app.post('/inprogress/:bool', (req, res, next) => {
+	if (req.params.bool === undefined) {
+		return next(new Error('no inprogress status'))
+	}
 	app.locals.inprogress = Boolean(req.params.bool);
 	return res.status(200).send(app.locals.inprogress)
 })
 
-app.post('/notbusy', (req, res, next) => {
-	app.locals.busy = false;
-	// if (req.query.q) {
-	// 	app.locals.avatar = decodeURIComponent(req.query.q) + '';
-	// }
-	return res.status(200).send('ok')
-})
+// app.post('/notbusy', (req, res, next) => {
+// 	app.locals.busy = false;
+// 	// if (req.query.q) {
+// 	// 	app.locals.avatar = decodeURIComponent(req.query.q) + '';
+// 	// }
+// 	return res.status(200).send('ok')
+// })
 
 app.use((err, req, res, next) => {
 	const stringErr = JSON.stringify(err)

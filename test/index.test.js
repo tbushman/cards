@@ -17,19 +17,49 @@ const $ = require('jquery');
 const cleanup = require('jsdom-global')();
 const dataObj = require('../views/vue/dataObj.js')
 //require(path.join(__dirname, '..', 'public/scripts/dataObj.js'));
-const functions = require('../public/scripts/functions.js');
+// const functions = require('../public/scripts/functions.js');
+const functions = require('../views/vue/functions.js');
 const pug = require('pug');
 // const template = require('../views/vue/component.pug');
-const pugStr = pug.renderFile(path.join(__dirname, '..', 'views/vue/component.pug')) + '';
+// const window = document.defaultView
+const pugStr = pug.renderFile(path.join(__dirname, '..', 'views/vue/component.pug'), {
+	info: 'init test',
+	players: ['player1'],
+	playerhands: {
+		player1: []
+	},
+	guestlist: 'player1',
+	busy: false,
+	appTitle: 'Cardgame',
+	cards: [],
+	discard: [],
+	localStorage: {
+		getItem: function(item){
+			return {}
+		},
+		setItem: function(item, setting) {
+			return
+		},
+		removeItem: function(item) {
+			return
+		}
+	},
+	inprogress: false
+});
 // const template = '<template>'+pugStr+'</template>'
-console.log(pugStr)
+// console.log(pugStr)
 nockBack.setMode('record');
-console.log(dataObj)
-Vue.use(Fragment.Plugin);
-var res = Vue.compile(pugStr);
-Vue.prototype.dataObj = require(path.join(__dirname, '..', 'public/scripts/dataObj.js'));
-Vue.prototype.functions = functions;
-const frontEnd = new Vue({
+// console.log(dataObj)
+// // Vue.use(Fragment.Plugin);
+// var res = Vue.compile(pugStr);
+// // Vue.prototype.dataObj = require(path.join(__dirname, '..', 'public/scripts/dataObj.js'));
+// // Vue.prototype.functions = functions;
+
+Vue.use($)
+
+const frontEnd = //new Vue(
+	{
+	components: { Fragment },
 	data: function() {
 		var app = this;
 		var info = 'testing';
@@ -131,21 +161,28 @@ const frontEnd = new Vue({
 		// 	inp
 		// )
 	},
-	render: res.render,
-	// template: pugStr,
+	// render: res.render,
+	template: pugStr,
 	methods: Object.assign({}, functions)
-});
+}
+// );
 
 // const marked = require('marked');
 
+const stub = Vue.extend(frontEnd)
+
 describe('API call', () => {
-	let key, gp, agent;
+	let key, gp, agent, wrapper;
 	// eslint-disable-next-line no-undef
 	before(async() => {
 		nock.enableNetConnect('127.0.0.1');
-		await app.listen(process.env.PORT, () => {
+		await app.listen(process.env.PORT, async() => {
 			console.log('connected');
 			agent = request.agent(app)
+			wrapper = await mount(
+				stub
+				// renderToString(pugStr)
+			)
 		})
 	}, 5000);
 	beforeEach(async() => {
@@ -187,14 +224,14 @@ describe('API call', () => {
 		.expect(200)
 		.then(async(res) => {
 			// console.log(res)
-			document.write(res.text);
-			// console.log(Vue)
-			const vueEl = document.getElementById('vue');
+			// document.write(res.text);
+			// const vueEl = document.getElementById('vue');
+			// expect(vueEl).to.not.equal(null);
+			// expect(vueEl.innerHTML).to.matchSnapshot()
 			// expect(window.vueEl.innerHTML).to.matchSnapshot();
 			// const wrapper = await mount(renderToString(res.text))
-			const wrapper = await mount(frontEnd)
 			expect(wrapper.text()).to.not.equal(null);
-			expect(wrapper.isVueInstance()).to.equal(true);
+			// expect(wrapper.isVueInstance()).to.equal(true);
 			expect(wrapper.text()).to.matchSnapshot()
 		})
 	});
@@ -205,7 +242,27 @@ describe('API call', () => {
 		agent.get('/')
 		.expect(200)
 		.then(async(response) => {
+			// global.$ = require('jquery');
+			// global.document = document;
+			wrapper.vm.runCheck();
+			if (!wrapper.vm.cards || wrapper.vm.cards === '' || wrapper.vm.cards === '[]' || wrapper.vm.cards.length === 0) {
+				console.log('no cards')
+				wrapper.vm.getCards()
 			
+			}
+			if (!wrapper.vm.players || wrapper.vm.players.length === 0) {
+				wrapper.vm.getPlayers();
+			}
+			if (!wrapper.vm.inprogress) {
+				
+			} else {
+				if (wrapper.vm.cards && wrapper.vm.cards.length > 0) {
+					wrapper.vm.startPlay();
+				}
+			}
+			// var $ = require('jquery');
+			// functions.runCheck();
+			// console.log(functions)
 		})
   })
 	

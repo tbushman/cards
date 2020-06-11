@@ -3,13 +3,21 @@ function dataObj(
 	info,
 	players,
 	playerhands,
+	guestlist,
 	busy,
 	appTitle,
 	cards,
 	discard,
 	lStorage,
 	inprogress
+	// ,
+	// jq,
+	// st,
+	// si
 ) {
+	// var settimeout = (!setTimeout || typeof setTimeout !== 'function' ? st : setTimeout);
+	// var setinterval = (!setInterval || typeof setInterval !== 'function' ? si : setInterval);
+	// var jquery = (!$ ? jq : $);
 	var localStorageVar = (!lStorage ? localStorage : lStorage);
 	return {
 		res: window.innerWidth < 600,
@@ -48,9 +56,12 @@ function dataObj(
 		teed: null,
 		inprogress: inprogress,
 		invite: [],
-		guestlist: (!localStorageVar.getItem('__cardgame_guestlist__') ? [localStorageVar.getItem('__cardgame_uid__')] : localStorageVar.getItem('__cardgame_guestlist__') ),
+		guestlist: guestlist,//(!localStorageVar.getItem('__cardgame_guestlist__') ? [localStorageVar.getItem('__cardgame_uid__')] : localStorageVar.getItem('__cardgame_guestlist__') ),
 		guestlistCollapse: true,
 		ready: false
-
+		// ,
+		// $: jquery,
+		// setTimeout: settimeout,
+		// setInterval: setinterval
 	}
 }
