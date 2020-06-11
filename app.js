@@ -60,7 +60,9 @@ app.get('/invite/:uid', (req, res, next) => {
 		inprogress: app.locals.inprogress,
 		guestlist: app.locals.guestlist,
 		discard: app.locals.discard,
-		turnIndex: app.locals.turnIndex
+		turnIndex: app.locals.turnIndex,
+		whoseTurn: locals.whoseTurn
+
 		// avatar: app.locals.avatar
 	})
 	// const mailgun = require("mailgun-js");
@@ -124,7 +126,8 @@ app.get('/', (req, res, next) => {
 		inprogress: app.locals.inprogress,
 		playerhands: app.locals.playerhands,
 		discard: app.locals.discard,
-		turnIndex: app.locals.turnIndex
+		turnIndex: app.locals.turnIndex,
+		whoseTurn: app.locals.whoseTurn
 		// avatar: app.locals.avatar
 	})
 })
@@ -191,8 +194,14 @@ app.post('/play/:uid/:card', async(req, res, next) => {
 
 // polled in half-second increments for front-end reactive button state
 app.post('/check/:locals', (req, res, next) => {
-	// console.log(req.params.locals, app.locals)
-	const locals = (!req.params.locals || req.params.locals === 'null' ? app.locals : JSON.parse(decodeURIComponent(req.params.locals)));
+	const noParams = !req.params.locals || req.params.locals === 'null';
+	const locals = (noParams ? app.locals : JSON.parse(decodeURIComponent(req.params.locals)));
+	if (!noParams) {
+		console.log(locals);
+		Object.keys(locals).forEach((l) => {
+			app.locals[l] = locals[l]
+		})
+	}
 	return res.status(200).send({
 		busy: locals.busy,
 		play: locals.play,
@@ -202,7 +211,8 @@ app.post('/check/:locals', (req, res, next) => {
 		discard: locals.discard,
 		inprogress: locals.inprogress,
 		playerhands: locals.playerhands,
-		turnIndex: app.locals.turnIndex
+		turnIndex: locals.turnIndex,
+		whoseTurn: locals.whoseTurn
 		// avatar: app.locals.avatar
 	});
 })
