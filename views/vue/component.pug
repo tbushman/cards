@@ -1,9 +1,9 @@
 //- fragment
 div.centerallwrap#vue
 	div#msg(style="position: fixed;top:10px;right:10px;")
-		p(v-text="whoseTurn")
-			span '
-			span s turn
+		p
+			span(v-text="whoseTurn")
+			span 's turn
 	div#meeting(style="float:left;" :style="{width: (!res ? '45%' : '100%'), display:(!api ? 'none' : 'block')}")
 
 	//- .ui(v-if="play")
