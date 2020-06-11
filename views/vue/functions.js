@@ -84,10 +84,12 @@ var functions = {
 			var self = this;
 			var guestlist = encodeURIComponent(self.guestlist);
 			console.log(guestlist)
-			$.post('/invite/'+guestlist+'', function(response){
-				localStorage.setItem('__cardgame_guestlist__', decodeURIComponent(guestlist))
-				self.guestlistCollapse = true
-			})
+			if (guestlist !== '') {
+				$.post('/invite/'+guestlist+'', function(response){
+					localStorage.setItem('__cardgame_guestlist__', decodeURIComponent(guestlist))
+					self.guestlistCollapse = true
+				})
+			}
 		},
 		startPlayersPolling: function() {
 			var self = this;
@@ -137,7 +139,8 @@ var functions = {
 					});
 					if (untee) {
 						setTimeout(function(){
-							self.teed = null;
+							self.teed.card = null;
+							self.teed.index = null;
 						}, 2000);
 					}
 				} else {
@@ -147,7 +150,7 @@ var functions = {
 		},
 		runCheck: function() {
 			var self = this;
-			if (!self.teed) {
+			if (!self.teed.index) {
 				$.post('/check/'+null, function(result) {
 					//- console.log(result)
 					if (result && result !== undefined) {
@@ -169,6 +172,13 @@ var functions = {
 					if (!self.whoseTurn || self.whoseTurn === '') {
 						self.turnIndex = (!self.players[turnIndex] ? 0 : turnIndex);
 						self.whoseTurn = (!self.players[turnIndex] ? self.uid : self.players[turnIndex]);
+					}
+					if (!self.guestlist || self.guestlist === '') {
+						if (localStorage.getItem('__cardgame_guestlist__')) {
+							self.guestlist = localStorage.getItem('__cardgame_guestlist__')
+						} else if (self.uid && self.players.indexOf(self.uid) === 0) {
+							self.guestlist = self.uid
+						}
 					}
 
 				})
@@ -380,7 +390,8 @@ var functions = {
 		tee: function(card, k) {
 			var self = this;
 			if (self.whoseTurn === self.uid) {
-				self.teed = card;
+				self.teed.card = card;
+				self.teed.index = k;
 			}
 		},
 		draw: function() {
@@ -391,9 +402,9 @@ var functions = {
 		},
 		discardActive: function() {
 			var self = this;
-			if (self.teed) {
-				self.discard.push(self.teed);
-				self.playerhands[self.uid].splice(self.playerhands[self.uid].indexOf(self.teed), 1);
+			if (self.teed.index) {
+				self.discard.push(self.teed.card);
+				self.playerhands[self.uid].splice(self.teed.index, 1);
 				self.updateCheck();
 			}
 		},

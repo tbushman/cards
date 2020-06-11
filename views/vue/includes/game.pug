@@ -94,6 +94,6 @@ div.centerall(@resize="getBubbleSize()" style="float:right;" :style="{width: (!r
 			img(
 				:src="'/images/'+c+'.svg'" 
 				style="height: auto; width: 90%;" 
-				:style="{border: (teed === c ? '2px solid red' : '0px solid rgba(255,255,255,0)')}"
+				:style="{border: (teed.card === c && teed.index === k ? '2px solid red' : '0px solid rgba(255,255,255,0)')}"
 				@click="tee(c, k)"
 			)
