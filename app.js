@@ -61,7 +61,9 @@ app.get('/invite/:uid', (req, res, next) => {
 		guestlist: app.locals.guestlist,
 		discard: app.locals.discard,
 		turnIndex: app.locals.turnIndex,
-		whoseTurn: app.locals.whoseTurn
+		whoseTurn: app.locals.whoseTurn,
+		teed: app.locals.teed,
+		unteed: app.locals.unteed
 
 		// avatar: app.locals.avatar
 	})
@@ -128,7 +130,9 @@ app.get('/', (req, res, next) => {
 		playerhands: app.locals.playerhands,
 		discard: app.locals.discard,
 		turnIndex: app.locals.turnIndex,
-		whoseTurn: app.locals.whoseTurn
+		whoseTurn: app.locals.whoseTurn,
+		teed: app.locals.teed,
+		unteed: app.locals.unteed
 		// avatar: app.locals.avatar
 	})
 })
@@ -220,7 +224,9 @@ app.post('/check/:locals', (req, res, next) => {
 		inprogress: locals.inprogress,
 		playerhands: locals.playerhands,
 		turnIndex: locals.turnIndex,
-		whoseTurn: locals.whoseTurn
+		whoseTurn: locals.whoseTurn,
+		teed: locals.teed,
+		unteed: locals.unteed
 		// avatar: app.locals.avatar
 	});
 })

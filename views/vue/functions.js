@@ -68,8 +68,8 @@ var functions = {
 					//- });
 					// console.log('present');
 					// console.log(present);
-					console.log('compare guestlist with player list:')
-					console.log(guestlist, present)
+					// console.log('compare guestlist with player list:')
+					// console.log(guestlist, present)
 					self.ready = (present.length === guestlist.length)
 			} else {
 				self.guestlist = self.players.join(', ')
@@ -101,16 +101,17 @@ var functions = {
 		},
 		updateCheck: function(untee) {
 			var self = this;
+			if (untee) {
+				var nextIndex = (!self.players[self.turnIndex+1] ? 0 : (self.turnIndex + 1))
+				self.turnIndex = nextIndex;
+				self.whoseTurn = (!self.players[nextIndex] ? self.uid : self.players[nextIndex]);
+				return self.updateCheck()
+			}
 			var playerhands = {}
 			Object.keys(self.playerhands).forEach(function(uid){
 				playerhands[uid] = self.playerhands[uid]
 			})//JSON.parse(JSON.stringify(self.playerhands))
 			//- console.log(playerhands)
-			if (untee) {
-				self.turnIndex = (!self.players[self.turnIndex+1] ? 0 : (self.turnIndex + 1));
-				self.whoseTurn = (!self.players[self.turnIndex] ? self.uid : self.players[self.turnIndex]);
-
-			}
 			var locals = {
 				busy: self.busy,
 				players: self.players,
@@ -120,7 +121,8 @@ var functions = {
 				inprogress: self.inprogress,
 				playerhands: playerhands,
 				turnIndex: self.turnIndex,
-				whoseTurn: self.whoseTurn
+				whoseTurn: self.whoseTurn,
+				teed: self.teed
 			}
 			console.log(locals)
 			$.post('/check/'+encodeURIComponent(JSON.stringify(locals)), function(result) {
@@ -139,8 +141,7 @@ var functions = {
 					});
 					if (untee) {
 						setTimeout(function(){
-							self.teed.card = null;
-							self.teed.index = null;
+							self.teed = []
 						}, 2000);
 					}
 				} else {
@@ -150,7 +151,7 @@ var functions = {
 		},
 		runCheck: function() {
 			var self = this;
-			if (!self.teed.index) {
+			if (self.teed && self.teed.length === 0) {
 				$.post('/check/'+null, function(result) {
 					//- console.log(result)
 					if (result && result !== undefined) {
@@ -390,22 +391,52 @@ var functions = {
 		tee: function(card, k) {
 			var self = this;
 			if (self.whoseTurn === self.uid) {
-				self.teed.card = card;
-				self.teed.index = k;
+				var isTeed = self.teed.filter(function(t){
+					return t.card === card & t.index === k
+				})[0]
+				if (isTeed) {
+					return self.untee(card, k);
+				}
+				self.teed.push({
+					card: card,
+					index: k
+				})
+			}
+		},
+		untee: function(card, k) {
+			var self = this;
+			if (self.whoseTurn === self.uid) {
+				// if (self.unteed && self.unteed.length > 0) {
+				// 
+				// }
+				var tIndex = -1
+				var teed = self.teed.filter(function(t,i){
+					if (t.card === card && t.index === k) {
+						tIndex = i;
+					}
+					return t.card === card && t.index === k
+				})[0];
+				if (tIndex > -1) {
+					self.playerhands[self.uid][teed.index] = teed.card;
+					self.teed.splice(tIndex, 1);
+				}
 			}
 		},
 		draw: function() {
 			var self = this;
 			self.playerhands[self.whoseTurn].push(self.cards[self.cards.length - 1]);
 			self.cards.pop();
-			self.updateCheck(true);
+			if (self.playerhands[self.whoseTurn].length === 6) {
+				self.updateCheck(true);
+			}
 		},
 		discardActive: function() {
 			var self = this;
-			if (self.teed.index) {
-				self.discard.push(self.teed.card);
-				self.playerhands[self.uid].splice(self.teed.index, 1);
-				self.updateCheck();
+			if (self.teed && self.teed.length > 0) {
+				for (var i in self.teed) {
+					self.discard.push(self.teed[i].card);
+					self.playerhands[self.uid].splice(self.teed[i].index, 1)
+				}
 			}
 		},
 		nextPlay: function(uid) {

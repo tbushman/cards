@@ -12,7 +12,7 @@ div.centerall(@resize="getBubbleSize()" style="float:right;" :style="{width: (!r
 		//- :style="{height: (!api ? '33%' : 'auto')}"
 	div.row.centerallwrap(v-if="cards && cards.length > 0"  style="position:relative;height:auto;")
 		div.tb-10-m0(
-			v-if="api && !guestlistCollapse && (players.length === 0 || players.indexOf(uid) === 0)"
+			v-if="(api && !guestlistCollapse && players.length > 0 && players.indexOf(uid) === 0)"
 			:style="{'padding-right': (!res ? '10px' : '0')}")
 			label(for="guestlist") Guestlist
 			input#guestlist.row(type="text" v-model="guestlist")
@@ -20,7 +20,7 @@ div.centerall(@resize="getBubbleSize()" style="float:right;" :style="{width: (!r
 			div.row
 				button(
 					:class="(!api ? 'tb-10-m0' : 'tb-04-m0')"
-					@click="sendInvites()" 
+					@click="sendInvites" 
 					v-text="'Send invites'"
 					style="float:none;"
 				)
@@ -94,6 +94,6 @@ div.centerall(@resize="getBubbleSize()" style="float:right;" :style="{width: (!r
 			img(
 				:src="'/images/'+c+'.svg'" 
 				style="height: auto; width: 90%;" 
-				:style="{border: (teed.card === c && teed.index === k ? '2px solid red' : '0px solid rgba(255,255,255,0)')}"
+				:style="{border: (whoseTurn === uid && Array.isArray(teed) && teed.map(function(t){return t.card}).indexOf(c) !== -1 && teed.map(function(t){return t.index}).indexOf(k) !== -1 ? '2px solid red' : '0px solid rgba(255,255,255,0)')}"
 				@click="tee(c, k)"
 			)

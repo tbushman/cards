@@ -24,6 +24,8 @@ script(type="text/javascript").
 			var dcrd = this.parseArr(!{JSON.stringify(discard)});
 			var strg = null;
 			var inp = this.parseBool(!{JSON.stringify(inprogress)});
+			var td = this.parseArr(!{JSON.stringify(teed)});
+			var ut = this.parseArr(!{JSON.stringify(unteed)});
 			//- var jq = $;
 			//- var st = setTimeout;
 			//- var si = setInterval;
@@ -38,7 +40,9 @@ script(type="text/javascript").
 				crds,
 				dcrd,
 				strg,
-				inp
+				inp,
+				td,
+				ut
 				//- ,
 				//- jq,
 				//- st,
