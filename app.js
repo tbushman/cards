@@ -62,8 +62,7 @@ app.get('/invite/:uid', (req, res, next) => {
 		discard: app.locals.discard,
 		turnIndex: app.locals.turnIndex,
 		whoseTurn: app.locals.whoseTurn,
-		teed: app.locals.teed,
-		unteed: app.locals.unteed
+		teed: app.locals.teed
 
 		// avatar: app.locals.avatar
 	})
@@ -131,8 +130,7 @@ app.get('/', (req, res, next) => {
 		discard: app.locals.discard,
 		turnIndex: app.locals.turnIndex,
 		whoseTurn: app.locals.whoseTurn,
-		teed: app.locals.teed,
-		unteed: app.locals.unteed
+		teed: app.locals.teed
 		// avatar: app.locals.avatar
 	})
 })
@@ -208,25 +206,24 @@ app.post('/check/:locals', (req, res, next) => {
 	const noParams = !req.params.locals || req.params.locals === 'null';
 	const locals = (noParams ? app.locals : JSON.parse(decodeURIComponent(req.params.locals)));
 	if (!noParams) {
-		// console.log(locals);
+		console.log(locals);
 		Object.keys(locals).forEach((l) => {
 			app.locals[l] = locals[l]
 		})
 	}
 	return res.status(200).send({
-		busy: locals.busy,
-		play: locals.play,
-		players: locals.players,
-		info: locals.info,
-		cards: locals.cards,
-		discard: locals.discard,
-		guestlist: locals.guestlist,
-		inprogress: locals.inprogress,
-		playerhands: locals.playerhands,
-		turnIndex: locals.turnIndex,
-		whoseTurn: locals.whoseTurn,
-		teed: locals.teed,
-		unteed: locals.unteed
+		busy: (!locals.busy ? app.locals.busy : locals.busy),
+		play: (!locals.play ? app.locals.play : locals.play),
+		players: (!locals.players ? app.locals.players : locals.players),
+		info: (!locals.info ? app.locals.info : locals.info),
+		cards: (!locals.cards ? app.locals.cards : locals.cards),
+		discard: (!locals.discard ? app.locals.discard : locals.discard),
+		guestlist: (!locals.guestlist ? app.locals.guestlist : locals.guestlist),
+		inprogress: (!locals.inprogress ? app.locals.inprogress : locals.inprogress),
+		playerhands: (!locals.playerhands ? app.locals.playerhands : locals.playerhands),
+		turnIndex: (!locals.turnIndex ? app.locals.turnIndex : locals.turnIndex),
+		whoseTurn: (!locals.whoseTurn ? app.locals.whoseTurn : locals.whoseTurn),
+		teed: (!locals.teed ? app.locals.teed : locals.teed)
 		// avatar: app.locals.avatar
 	});
 })

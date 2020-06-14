@@ -24,11 +24,6 @@ script(type="text/javascript").
 			var dcrd = this.parseArr(!{JSON.stringify(discard)});
 			var strg = null;
 			var inp = this.parseBool(!{JSON.stringify(inprogress)});
-			var td = this.parseArr(!{JSON.stringify(teed)});
-			var ut = this.parseArr(!{JSON.stringify(unteed)});
-			//- var jq = $;
-			//- var st = setTimeout;
-			//- var si = setInterval;
 			return dataObj(
 				app,
 				inf,
@@ -40,65 +35,23 @@ script(type="text/javascript").
 				crds,
 				dcrd,
 				strg,
-				inp,
-				td,
-				ut
-				//- ,
-				//- jq,
-				//- st,
-				//- si
+				inp
 			)
-			//- return {
-			//- 	res: window.innerWidth < 600,
-			//- 	api: null,
-			//- 	info: (this.parseObj(!{JSON.stringify(info)}) === '' ? this.parseObj(!{JSON.stringify(appTitle)}) : this.parseObj(!{JSON.stringify(info)})),
-			//- 	players: this.parseObj(!{JSON.stringify(players)}),
-			//- 	playerhands: this.parseObject(!{JSON.stringify(playerhands)}),
-			//- 	play: this.parseObj(!{JSON.stringify(play)}),
-			//- 	busy: this.parseBool(!{JSON.stringify(busy)}),
-			//- 	hov: '',
-			//- 	timeout: '',
-			//- 	interval: '',
-			//- 	appTitle: this.parseObj(!{JSON.stringify(appTitle)}),
-			//- 	wiw: window.innerWidth,
-			//- 	wih: window.innerHeight,
-			//- 	bubblesize: null,
-			//- 	modal: false,
-			//- 	suits: ['heart', 'club', 'diamond', 'spade'],
-			//- 	cards: this.parseArr(!{JSON.stringify(cards)}),
-			//- 	decka: [],
-			//- 	deckb: [],
-			//- 	deckc: [],
-			//- 	discard: this.parseArr(!{JSON.stringify(discard)}),
-			//- 	connection: null,
-			//- 	room: null,
-			//- 	localTracks: [],
-			//- 	remoteTracks: {},
-			//- 	isVideo: false,
-			//- 	isJoined: false,
-			//- 	isFirefox: (!navigator ? true : navigator.userAgent.includes('Firefox')),
-			//- 	isSafari: /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification)),
-			//- 	user: '',
-			//- 	hand: [],
-			//- 	uid: (!localStorage.getItem('__cardgame_uid__') ? null : localStorage.getItem('__cardgame_uid__')),
-			//- 	whoseTurn: '',
-			//- 	turnIndex: 0,
-			//- 	teed: null,
-			//- 	inprogress: this.parseBool(!{JSON.stringify(inprogress)}),
-			//- 	invite: [],
-			//- 	guestlist: (!localStorage.getItem('__cardgame_guestlist__') ? [localStorage.getItem('__cardgame_uid__')] : localStorage.getItem('__cardgame_guestlist__') ),
-			//- 	guestlistCollapse: true,
-			//- 	ready: false
-			//- }
 		},
 		updated: function() {
 
 		},
 		beforeDestroy: function() {
 			var self = this;
-			clearTimeout(self.timeout);
-			clearInterval(self.interval);
-			
+			if (self.timeout && self.timeout !== '') {
+				clearTimeout(self.timeout);
+			}
+			if (self.interval && self.interval !== '') {
+				clearInterval(self.interval);
+			}
+			if (self.longinterval && self.longinterval !== '') {
+				clearInterval(self.longinterval)
+			}
 			//- self.connection.disconnect()
 			if (self.players.indexOf(self.uid) !== 0) {
 				self.leave()
@@ -129,7 +82,15 @@ script(type="text/javascript").
 					self.startPlay();
 				}
 			}
+			self.startLongPolling();
+			//- if (self.whoseTurn === self.uid) {
+			//- 	setTimeout(function(){
+			//- 		self.longinterval = setInterval(function(){
+			//- 			self.updateCheck()
+			//- 		}, 10000)
+			//- 	},10000)
+			//- }
 		},
-		methods: Object.assign({}, jitsiFunctions, functions)
+		methods: Object.assign({}, /*jitsiFunctions,*/ functions)
 		
 	})
