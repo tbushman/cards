@@ -10,7 +10,7 @@ function dataObj(
 	discard,
 	lStorage,
 	inprogress,
-	// teed,
+	teed
 	// unteed
 	// ,
 	// jq,
@@ -56,7 +56,7 @@ function dataObj(
 		uid: (!localStorageVar.getItem('__cardgame_uid__') ? null : localStorageVar.getItem('__cardgame_uid__')),
 		whoseTurn: '',
 		turnIndex: 0,
-		teed: null,
+		teed: (!teed ? {card:null, index:null} : teed),
 		// unteed: unteed,
 		inprogress: inprogress,
 		invite: [],

@@ -8,6 +8,16 @@ const path = require('path');
 const url = require('url');
 const http = require('http');
 const app = express();
+
+function handleWs(client) {
+	client.on('event', data => {
+		
+	});
+	client.on('disconnect', () => {
+		
+	})
+}
+
 app.set('views', path.join('.', 'views'));
 app.set('view engine', 'pug');
 app.use(express.static(path.join('.', 'public')));
@@ -138,6 +148,9 @@ app.get('/', (req, res, next) => {
 // app.get('/deal', async (req, res, next) => {
 //   return res.status(200).send('setup deal')
 // })
+app.post('/whoseturn', (req, res, next) => {
+	return res.status(200).send(app.locals.whoseTurn)
+})
 
 app.post('/save/:cards', async(req,res,next)=>{
 	if (!JSON.parse(decodeURIComponent(req.params.cards))) {
@@ -268,6 +281,8 @@ app.use((err, req, res, next) => {
 app.set('port', process.env.PORT);
 if (!process.env.TEST_ENV) {
 	const server = http.createServer(app);
+	const io = require('socket.io')(server);
+	io.on('connection', handleWs);
 	server.listen(process.env.PORT)//, onListening);
 	server.on('error', (error) => {throw error});
 	server.on('listening', onListening);

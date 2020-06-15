@@ -1,6 +1,7 @@
 script(src="/scripts/jitsiFunctions.js")
 script(src="/scripts/dataObj.js?version="+Math.random())
 script(src="/scripts/functions.js?version="+Math.random())
+script(src="node_modules/socket.io-client/dist/socket.io.js")
 script(type="text/javascript").
 	Vue.prototype.$ = $;
 	Vue.prototype.window = window;
@@ -10,6 +11,7 @@ script(type="text/javascript").
 	Vue.prototype.localStorage = localStorage;
 	Vue.prototype.dataObj = dataObj;
 	Vue.prototype.functions = functions;
+	var socket = io();
 	var vueEl = new Vue({
 		el: '#vue',
 		data: function() {
@@ -24,6 +26,7 @@ script(type="text/javascript").
 			var dcrd = this.parseArr(!{JSON.stringify(discard)});
 			var strg = null;
 			var inp = this.parseBool(!{JSON.stringify(inprogress)});
+			var td = this.nullIfEmpty(this.parseObj(!{JSON.stringify(teed)}));
 			return dataObj(
 				app,
 				inf,
@@ -35,7 +38,8 @@ script(type="text/javascript").
 				crds,
 				dcrd,
 				strg,
-				inp
+				inp,
+				td
 			)
 		},
 		updated: function() {

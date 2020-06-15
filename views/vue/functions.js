@@ -1,5 +1,9 @@
 var functions = {
 	// return {
+		nullIfEmpty: function(obj) {
+			if (!obj || obj === '') return null;
+			return obj;
+		},
 		parseObj: function(obj) {
 			if (!obj) return '';
 			return obj;
@@ -35,7 +39,7 @@ var functions = {
 				})
 			})
 			self.players = [];
-			self.updateCheck()
+			self.updateCheck(null, null)
 		},
 		leave: function() {
 			var self = this;
@@ -49,7 +53,7 @@ var functions = {
 			if (self.api) {
 				self.api.dispose();
 			}
-			self.updateCheck()
+			self.updateCheck(null, null)
 		},
 		accountGuestlist: function() {
 			var self = this;
@@ -98,13 +102,33 @@ var functions = {
 			
 			// setTimeout(function(){
 				self.longinterval = setInterval(function(){
-					if (self.whoseTurn === self.uid) {
-						self.updateCheck()
-					}
-				}, 10000)
+					$.post('/whoseturn', function(result){
+						if (result !== '') {
+							self.whoseTurn = result;
+						} else {
+							console.log('WTAF')
+							if (self.whoseTurn && self.whoseTurn !== '' && self.players.indexOf(self.uid) === 0) {
+								self.updateCheck(null, null)
+							}
+						}
+						if (self.whoseTurn === self.uid) {
+							self.updateCheck(null, null)
+						}
+					})
+					
+				}, 5000)
 			// },10000)
 
 			
+		},
+		setTurn: function(e) {
+			var self = this;
+			var val = e.target.value;
+			if (val && val !== '') {
+				self.turnIndex = (self.players.indexOf(val) !== -1 ? self.players.indexOf(val) : 0);
+				self.whoseTurn = self.players[self.turnIndex]
+				self.updateCheck()
+			}
 		},
 		startPlayersPolling: function() {
 			var self = this;
@@ -180,7 +204,8 @@ var functions = {
 					});
 					if (whoseTurn) {
 						setTimeout(function(){
-							self.teed = null;
+							self.teed.card = null;
+							self.teed.index = null;
 						}, 1000);
 					}
 				} else {
@@ -190,7 +215,7 @@ var functions = {
 		},
 		runCheck: function() {
 			var self = this;
-			if (!self.teed || self.teed === '') {
+			if (!self.teed.index && self.whoseTurn !== self.uid) {
 				$.post('/check/'+null, function(result) {
 					//- console.log(result)
 					if (result && result !== undefined) {
@@ -328,7 +353,7 @@ var functions = {
 			//- console.log(cards)
 			$.post('/save/'+encodeURIComponent(JSON.stringify(cards))+'', function(response){
 				self.cards = response;
-				self.updateCheck()
+				self.updateCheck(null, null)
 			});
 		},
 		deal: function() {
@@ -350,7 +375,7 @@ var functions = {
 					if (!self.whoseTurn || self.whoseTurn === '') {
 						self.whoseTurn = self.uid;
 					}
-					self.updateCheck();
+					self.updateCheck(null, null);
 				})
 			})
 
@@ -444,7 +469,7 @@ var functions = {
 				// // 	return t.card === card & t.index === k
 				// // })
 				// [0]
-				if (self.teed) {
+				if (self.teed.index) {
 					self.untee(self.teed.card, self.teed.index);
 				}
 				self.teed =
@@ -471,7 +496,8 @@ var functions = {
 				// })[0];
 				// if (tIndex > -1) {
 					self.playerhands[self.uid][self.teed.index] = self.teed.card;
-					self.teed = null;//.splice(tIndex, 1);
+					self.teed.index = null;
+					self.teed.card = null;//.splice(tIndex, 1);
 				// }
 			}
 		},
@@ -496,14 +522,14 @@ var functions = {
 		discardActive: function() {
 			var self = this;
 			if (self.whoseTurn === self.uid) {
-				if (self.teed && self.teed !== '') {
+				if (self.teed.index) {
 					// for (var i in self.teed) {
 					// 	self.discard.push(self.teed[i].card);
 					// 	self.playerhands[self.uid].splice(self.teed[i].index, 1)
 					// }
 					self.discard.push(self.teed.card);
 					self.playerhands[self.uid].splice(self.teed.index, 1)
-					self.updateCheck()
+					self.updateCheck(null, null)
 				}
 			}
 		},

@@ -11,6 +11,11 @@ div.centerall(@resize="getBubbleSize()" style="float:right;" :style="{width: (!r
 			//- div.tb-10-m0.tb-07-m2
 		//- :style="{height: (!api ? '33%' : 'auto')}"
 	div.row.centerallwrap(v-if="cards && cards.length > 0"  style="position:relative;height:auto;")
+		div.tb-10-m0(v-if="!whoseTurn || whoseTurn === ''")
+			label(for="turn") Who's turn? 
+			select#turn(v-model="whoseTurn" @change="setTurn")
+				option(value="") Please select a player
+				option(v-for="(player, p) in players" :value="player" :selected="whoseTurn === player" v-text="player")
 		div.tb-10-m0(
 			v-if="(api && !guestlistCollapse && players.length > 0 && players.indexOf(uid) === 0)"
 			:style="{'padding-right': (!res ? '10px' : '0')}")
