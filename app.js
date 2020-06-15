@@ -8,6 +8,23 @@ const path = require('path');
 const url = require('url');
 const http = require('http');
 const app = express();
+const localKeys = ['busy', 'players', 'playerhands', 'cards', 'discard', 'info', 'inprogress', 'teed', 'whoseTurn', 'turnIndex'];
+const initLocals = {
+	busy: false,
+	players: [],
+	playerhands: {},
+	cards: [],
+	discard: [],
+	info: '',
+	inprogress: false,
+	teed: {
+		card: null,
+		index: null
+	},
+	whoseTurn: '',
+	turnIndex: 0
+}
+
 app.set('views', path.join('.', 'views'));
 app.set('view engine', 'pug');
 app.use(express.static(path.join('.', 'public')));
@@ -32,54 +49,15 @@ app.get('/unload', async (req, res, next) => {
 	var keys = Object.keys(app.locals);
 	console.log(keys);
 	await keys.forEach((key) => {
-		if (key !== 'settings' && key !== '$' && key !== 'guestlist') {
+		if (key !== 'settings' && key !== '$') {
 			delete app.locals[key]
 		}
 	})
 	return res.redirect('/')
 })
 
-// app.post('/env', async(req, res, next) => {
-// 	const v = process.env.V;
-// 	return res.status(200).send(v);
-// })
-
 app.get('/invite/:uid', (req, res, next) => {
-	var players = (!app.locals.players ? [] : app.locals.players);
-	if (players.indexOf(req.params.uid) === -1) {
-		players.push(req.params.uid);
-	}
-	app.locals.players = players;
-	// console.log(app.locals.cards)
-	return res.render('main', {
-		players: app.locals.players,
-		info: app.locals.info,
-		play: app.locals.play,
-		busy: false,
-		cards: app.locals.cards,
-		inprogress: app.locals.inprogress,
-		guestlist: app.locals.guestlist,
-		discard: app.locals.discard,
-		turnIndex: app.locals.turnIndex,
-		whoseTurn: app.locals.whoseTurn,
-		teed: app.locals.teed
-
-		// avatar: app.locals.avatar
-	})
-	// const mailgun = require("mailgun-js");
-	// const mg = mailgun({apiKey: process.env.MG_KEY, domain: process.env.MG_DOMAIN});
-	// const list = 'tracey.bushman@gmail.com'//decodeURIComponent(req.params.list);
-	// const gameurl = req.app.locals.appUrl
-	// const data = {
-	// 	from: 'Cardgame with family <tbushman@mg.bli.sh>',
-	// 	to: list,
-	// 	subject: 'Card game invite',
-	// 	text: 'Join the game in progress: '+gameurl
-	// 	//`<a href="${gameurl}" target="_blank">Click here to join the card game!</a>`
-	// };
-	// mg.messages().send(data, function (error, body) {
-	// 	console.log(body);
-	// });
+	return res.render('main')
 })
 
 app.post('/invite/:guestlist', async(req, res, next) => {
@@ -108,141 +86,14 @@ app.post('/invite/:guestlist', async(req, res, next) => {
 
 	
 })
-// app.get('/reset', (req, res, next) => {
-// 	// redirected from 500 error
-// 	delete app.locals.play;
-// 	// app.locals.avatar = null;
-// 	app.locals.busy = false;
-// 	app.locals.info = 'Please try again.'
-// 	return res.redirect(307, '/');
-// })
 
 app.get('/', (req, res, next) => {
-	return res.render('main', {
-		players: app.locals.players,
-		info: app.locals.info,
-		play: app.locals.play,
-		busy: false,
-		guestlist: app.locals.guestlist,
-		cards: app.locals.cards,
-		inprogress: app.locals.inprogress,
-		playerhands: app.locals.playerhands,
-		discard: app.locals.discard,
-		turnIndex: app.locals.turnIndex,
-		whoseTurn: app.locals.whoseTurn,
-		teed: app.locals.teed
-		// avatar: app.locals.avatar
-	})
+	return res.render('main')
 })
 
-// app.get('/deal', async (req, res, next) => {
-//   return res.status(200).send('setup deal')
-// })
-
-app.post('/save/:cards', async(req,res,next)=>{
-	if (!JSON.parse(decodeURIComponent(req.params.cards))) {
-		return next(new Error('no cards to save'))
-	}
-	app.locals.cards = JSON.parse(decodeURIComponent(req.params.cards));
-	return res.status(200).send(app.locals.cards)
+app.post('/whoseturn', (req, res, next) => {
+	return res.status(200).send(app.locals.whoseTurn)
 })
-
-app.post('/playerhands/:hands', async(req, res, next) => {
-	if (!JSON.parse(decodeURIComponent(req.params.hands))) {
-		return next(new Error('no playerhands to save'))
-	}
-	console.log(decodeURIComponent(req.params.hands))
-	app.locals.playerhands = JSON.parse(decodeURIComponent(req.params.hands));
-	return res.status(200).send(app.locals.playerhands)
-})
-
-app.post('/playerleave/:uid', async(req, res, next) => {
-	console.log('player leaving');
-	const players = app.locals.players;
-	if (players && players.indexOf(req.params.uid) !== -1) {
-		players.splice(players.indexOf(req.params.uid), 1);
-	}
-	console.log(req.params.uid)
-	app.locals.players = players;
-	return res.status(200).send(players);
-})
-
-app.post('/player/:uid', async(req, res, next) => {
-	var players = (!app.locals.players ? [] : app.locals.players);
-	if (players.indexOf(req.params.uid) === -1) {
-		players.push(req.params.uid);
-	}
-	app.locals.players = players;
-	return res.status(200).send(players)
-})
-
-// app.post('/play/:uid/:card', async(req, res, next) => {
-// 	if (!app.locals.busy) {
-// 		delete app.locals.info;
-// 		app.locals.busy = true;
-// 		// app.locals.avatar = req.params.uid;
-// 		app.locals.play = {
-// 			currentPlay: req.params.card,
-// 			name: req.params.uid
-// 		}
-// 		app.locals.busy = false;
-// 		return res.status(200).send({
-// 			play: app.locals.play,
-// 			busy: app.locals.busy
-// 		});
-// 	} else {
-// 		return res.status(200).send(null
-// 			/*{
-// 			play: app.locals.play,
-// 			busy: true
-// 		}*/
-// 		)
-// 
-// 	}
-// })
-// 
-// polled in half-second increments for front-end reactive button state
-app.post('/check/:locals', (req, res, next) => {
-	const noParams = !req.params.locals || req.params.locals === 'null';
-	const locals = (noParams ? app.locals : JSON.parse(decodeURIComponent(req.params.locals)));
-	if (!noParams) {
-		console.log(locals);
-		Object.keys(locals).forEach((l) => {
-			app.locals[l] = locals[l]
-		})
-	}
-	return res.status(200).send({
-		busy: (!locals.busy ? app.locals.busy : locals.busy),
-		play: (!locals.play ? app.locals.play : locals.play),
-		players: (!locals.players ? app.locals.players : locals.players),
-		info: (!locals.info ? app.locals.info : locals.info),
-		cards: (!locals.cards ? app.locals.cards : locals.cards),
-		discard: (!locals.discard ? app.locals.discard : locals.discard),
-		guestlist: (!locals.guestlist ? app.locals.guestlist : locals.guestlist),
-		inprogress: (!locals.inprogress ? app.locals.inprogress : locals.inprogress),
-		playerhands: (!locals.playerhands ? app.locals.playerhands : locals.playerhands),
-		turnIndex: (!locals.turnIndex ? app.locals.turnIndex : locals.turnIndex),
-		whoseTurn: (!locals.whoseTurn ? app.locals.whoseTurn : locals.whoseTurn),
-		teed: (!locals.teed ? app.locals.teed : locals.teed)
-		// avatar: app.locals.avatar
-	});
-})
-
-app.post('/inprogress/:bool', (req, res, next) => {
-	if (req.params.bool === undefined) {
-		return next(new Error('no inprogress status'))
-	}
-	app.locals.inprogress = Boolean(req.params.bool);
-	return res.status(200).send(app.locals.inprogress)
-})
-
-// app.post('/notbusy', (req, res, next) => {
-// 	app.locals.busy = false;
-// 	// if (req.query.q) {
-// 	// 	app.locals.avatar = decodeURIComponent(req.query.q) + '';
-// 	// }
-// 	return res.status(200).send('ok')
-// })
 
 app.use((err, req, res, next) => {
 	const stringErr = JSON.stringify(err)
@@ -264,16 +115,113 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500);
   res.render('error', { error: err })
 })
+/**
+* Get port from environment and store in Express.
+*/
+var port = normalizePort(process.env.PORT || '9098');
+app.set('port', port);
 
-app.set('port', process.env.PORT);
-if (!process.env.TEST_ENV) {
-	const server = http.createServer(app);
-	server.listen(process.env.PORT)//, onListening);
-	server.on('error', (error) => {throw error});
-	server.on('listening', onListening);
-	function onListening() {
-		console.log(`listening on ${process.env.PORT}`)
-	}
+/**
+* Create HTTP server.
+*/
+var server = http.createServer(app);
+/**
+* Listen on provided port, on all network interfaces.
+*/
+const io = require('socket.io')(server);
+io.on('connection', handleWs);
+
+server.listen(port);
+
+server.on('error', onError);
+server.on('listening', onListening);
+
+function handleWs(socket) {
+	socket.on('new player', data => {
+		console.log('new player');
+		console.log(data);
+		if (data && data !== '') {
+			io.emit('changed players', data)
+		}
+	})
+	socket.on('change state', data => {
+		console.log('state change')
+		console.log(data)
+		if (data && data !== '') {
+			io.emit('changed state', data)
+		}
+	});
+	socket.on('whose turn', data => {
+		console.log('whose turn?')
+		console.log(data)
+		if (data && data !== '') {
+			io.emit('new turn', data)
+		}
+	});
+	socket.on('disconnect', () => {
+		
+	})
 }
 
-module.exports = app;
+
+/**
+* Normalize a port into a number, string, or false.
+*/
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+* Event listener for HTTP server "error" event.
+*/
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+* Event listener for HTTP server "listening" event.
+*/
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+ 	console.log('Listening on '+ bind);
+}
+
+// module.exports = app;

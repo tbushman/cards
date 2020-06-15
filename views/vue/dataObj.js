@@ -1,33 +1,14 @@
 function dataObj(
 	self,
-	info,
-	players,
-	playerhands,
-	guestlist,
-	busy,
-	appTitle,
-	cards,
-	discard,
-	lStorage,
-	inprogress,
-	// teed,
-	// unteed
-	// ,
-	// jq,
-	// st,
-	// si
+	appTitle
 ) {
-	// var settimeout = (!setTimeout || typeof setTimeout !== 'function' ? st : setTimeout);
-	// var setinterval = (!setInterval || typeof setInterval !== 'function' ? si : setInterval);
-	// var jquery = (!$ ? jq : $);
-	var localStorageVar = (!lStorage ? localStorage : lStorage);
 	return {
 		res: window.innerWidth < 600,
 		api: null,
-		info: (info === '' ? appTitle : info),
-		players: players,
-		playerhands: playerhands,
-		busy: busy,
+		info: appTitle,
+		players: [],
+		playerhands: {},
+		busy: false,
 		hov: '',
 		timeout: '',
 		interval: '',
@@ -38,11 +19,11 @@ function dataObj(
 		bubblesize: null,
 		modal: false,
 		suits: ['heart', 'club', 'diamond', 'spade'],
-		cards: cards,
+		cards: [],
 		decka: [],
 		deckb: [],
 		deckc: [],
-		discard: discard,
+		discard: [],
 		connection: null,
 		room: null,
 		localTracks: [],
@@ -53,19 +34,32 @@ function dataObj(
 		isSafari: /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification)),
 		user: '',
 		hand: [],
-		uid: (!localStorageVar.getItem('__cardgame_uid__') ? null : localStorageVar.getItem('__cardgame_uid__')),
+		uid: (!localStorage.getItem('__cardgame_uid__') ? null : localStorage.getItem('__cardgame_uid__')),
 		whoseTurn: '',
 		turnIndex: 0,
-		teed: null,
+		teed: {card: null, index: null},
 		// unteed: unteed,
-		inprogress: inprogress,
+		inprogress: false,
 		invite: [],
-		guestlist: guestlist,//(!localStorageVar.getItem('__cardgame_guestlist__') ? [localStorageVar.getItem('__cardgame_uid__')] : localStorageVar.getItem('__cardgame_guestlist__') ),
+		guestlist: (!localStorage.getItem('__cardgame_guestlist__') ? '' : localStorage.getItem('__cardgame_guestlist__') ),
 		guestlistCollapse: true,
-		ready: false
-		// ,
-		// $: jquery,
-		// setTimeout: settimeout,
-		// setInterval: setinterval
+		ready: false,
+		keys: ['busy', 'players', 'playerhands', 'cards', 'discard', 'info', 'inprogress', 'teed', 'whoseTurn', 'turnIndex', 'guestlist'],
+		initLocals: {
+			busy: false,
+			players: [],
+			playerhands: {},
+			cards: [],
+			discard: [],
+			info: '',
+			inprogress: false,
+			teed: {
+				card: null,
+				index: null
+			},
+			whoseTurn: '',
+			turnIndex: 0,
+			guestlist: (!localStorage.getItem('__cardgame_guestlist__') ? /*(!self.uid ? localStorage.getItem('__cardgame_uid__') : this.uid)*/'' : localStorage.getItem('__cardgame_guestlist__'))
+		}
 	}
 }
