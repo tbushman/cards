@@ -38,6 +38,7 @@ app.use((req, res, next)=> {
 	app.locals.appUrl = (process.env.NODE_ENV==='production' ? process.env.APP_URL : `http://localhost:${process.env.PORT}`);
 	// app.locals.$ = jQuery;
 	app.locals.appTitle = 'Cardgame';
+	app.locals.production = (process.env.NODE_ENV === 'production')
 	return next();
 })
 
