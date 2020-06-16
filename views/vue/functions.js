@@ -31,9 +31,6 @@ var functions = {
 				self.localTracks[i].dispose();
 			}
 			self.api.dispose();
-			self.keys.forEach(function(k){
-				self[k] = self.initLocals[k]
-			});
 			socket.emit('disconnect')
 		},
 		leave: function() {
@@ -74,7 +71,7 @@ var functions = {
 				var present = self.players.filter(function(player){
 					return guestlist.indexOf(player) !== -1 
 				});
-				return (present.length === guestlist.length)
+				return (present.length === guestlist.length && guestlist.length > 1)
 			} else {
 				return false
 			}

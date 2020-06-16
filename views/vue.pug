@@ -41,6 +41,7 @@ script(type="text/javascript").
 			if (self.timeout && self.timeout !== '') {
 				clearTimeout(self.timeout);
 			}
+			self.leave()
 		},
 		mounted: async function() {
 			var self = this;
@@ -55,6 +56,10 @@ script(type="text/javascript").
 				if (localStorage.getItem('__cardgame_guestlist__')) {
 					self.guestlist = localStorage.getItem('__cardgame_guestlist__')
 				} else {
+					if (!self.inprogress) {
+						self.guestlist = self.uid;
+					}
+
 				}
 			}
 			self.startPlay();
@@ -71,7 +76,7 @@ script(type="text/javascript").
 						self[k] = msg[k]
 					}
 				});
-				self.ready = self.isReady()
+				self.ready = self.isReady();
 			})
 		},
 		methods: Object.assign({}, functions)

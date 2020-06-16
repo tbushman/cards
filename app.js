@@ -107,7 +107,7 @@ app.post('/invite/:guestlist', async(req, res, next) => {
 			b = body;
 		});
 	})
-	app.locals.vars.guestlist = list.join(', ');
+	// app.locals.vars.guestlist = list.join(', ');
 	app.locals.vars.inprogress = true;
 	io.emit('change state', app.locals.vars);
 	return res.status(200).send('ok')
