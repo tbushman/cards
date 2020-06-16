@@ -125,13 +125,6 @@ server.on('error', onError);
 server.on('listening', onListening);
 
 function handleWs(socket) {
-	// socket.on('new player', data => {
-	// 	console.log('new player');
-	// 	console.log(data);
-	// 	if (data && data !== '') {
-	// 		io.emit('changed players', data)
-	// 	}
-	// })
 	
 	socket.on('get state', () => {
 		console.log('getting state: ')
@@ -149,13 +142,6 @@ function handleWs(socket) {
 			io.emit('changed state', data)
 		}
 	});
-	// socket.on('whose turn', data => {
-	// 	console.log('whose turn?')
-	// 	console.log(data)
-	// 	if (data && data !== '') {
-	// 		io.emit('new turn', data)
-	// 	}
-	// });
 	socket.on('disconnect', () => {
 		
 	})

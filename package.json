@@ -6,8 +6,7 @@
   "scripts": {
     "test": "cross-env TEST_ENV=true RECORD_ENV=true mocha --require jsdom-global/register --require mocha-snapshots --update",
     "test-lock": "cross-env TEST_ENV=true RECORD_ENV=false mocha --require mocha-snapshots",
-    "start": "nodemon",
-    "build": "uglifyjs ./views/vue/dataObj.js -o ./public/scripts/dataObj.js && uglifyjs ./views/vue/functions.js -o ./public/scripts/functions.js --ie8 --safari10"
+    "start": "nodemon"
   },
   "repository": {
     "type": "git",
