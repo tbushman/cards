@@ -1,41 +1,36 @@
-script(src="/scripts/jitsiFunctions.js")
+//- script(src="/scripts/jitsiFunctions.js")
 script(src="/scripts/dataObj.js?version="+Math.random())
 script(src="/scripts/functions.js?version="+Math.random())
+if (!production)
+	script(src="/scripts/socket.io-client/dist/socket.io.dev.js")
+else
+	script(src="/scripts/socket.io-client/dist/socket.io.js")
+
 script(type="text/javascript").
+	var socket = io();
 	Vue.prototype.$ = $;
 	Vue.prototype.window = window;
-	//- Vue.prototype.marked = marked;
-	//- Vue.prototype.moment = moment;
 	Vue.prototype.JitsiMeetExternalAPI = window.JitsiMeetExternalAPI;
 	Vue.prototype.localStorage = localStorage;
 	Vue.prototype.dataObj = dataObj;
 	Vue.prototype.functions = functions;
+	Vue.prototype.socket = socket;
 	var vueEl = new Vue({
 		el: '#vue',
 		data: function() {
 			var app = this;
-			var inf = this.parseObj(!{JSON.stringify(info)});
-			var plyrs = this.parseArr(!{JSON.stringify(players)});
-			var plyrh = this.parseObject(!{JSON.stringify(playerhands)});
-			var guests = (this.parseObj(!{JSON.stringify(guestlist)}) === '' ? (!localStorage.getItem('__cardgame_guestlist__') ? (!localStorage.getItem('__cardgame_uid__') ? '' : localStorage.getItem('__cardgame_uid__')) : localStorage.getItem('__cardgame_guestlist__') )/*(!this.uid || this.uid === '' ? '' : [this.uid])*/ : this.parseObj(!{JSON.stringify(guestlist)}));
-			var bsy = this.parseBool(!{JSON.stringify(busy)});
 			var apt = this.parseObj(!{JSON.stringify(appTitle)});
-			var crds = this.parseArr(!{JSON.stringify(cards)});
-			var dcrd = this.parseArr(!{JSON.stringify(discard)});
-			var strg = null;
-			var inp = this.parseBool(!{JSON.stringify(inprogress)});
+			var plyrs = this.parseObj(!{JSON.stringify(players)});
+			var guests = this.nullIfEmpty(this.parseObj(!{JSON.stringify(guestlist)}));
+			var wt = this.parseObj(!{JSON.stringify(whoseTurn)});
+			var ti = this.parseObj(!{JSON.stringify(turnIndex)});
 			return dataObj(
 				app,
-				inf,
-				plyrs,
-				plyrh,
-				guests,
-				bsy,
 				apt,
-				crds,
-				dcrd,
-				strg,
-				inp
+				plyrs,
+				guests,
+				wt,
+				ti
 			)
 		},
 		updated: function() {
@@ -46,51 +41,39 @@ script(type="text/javascript").
 			if (self.timeout && self.timeout !== '') {
 				clearTimeout(self.timeout);
 			}
-			if (self.interval && self.interval !== '') {
-				clearInterval(self.interval);
-			}
-			if (self.longinterval && self.longinterval !== '') {
-				clearInterval(self.longinterval)
-			}
-			//- self.connection.disconnect()
-			if (self.players.indexOf(self.uid) !== 0) {
-				self.leave()
-			} else {
-				self.unload()
-			}
 		},
 		mounted: async function() {
 			var self = this;
 			self.getBubbleSize();
 			window.addEventListener('resize', self.handleResize);
-			self.runCheck();
-			if (!self.guestlist || self.guestlist === '') {
-				self.guestlistCollapse = false;
-			}
+			self.getCheck();
 			if (!self.cards || self.cards === '' || self.cards === '[]' || self.cards.length === 0) {
 				console.log('no cards')
 				self.getCards()
-			
 			}
-			if (!self.players || self.players.length === 0) {
-				self.getPlayers();
-			}
-			if (!self.inprogress) {
-				
-			} else {
-				if (self.cards && self.cards.length > 0) {
-					self.startPlay();
+			if (!self.guestlist || self.guestlist === '' || self.guestlist === self.uid) {
+				if (localStorage.getItem('__cardgame_guestlist__')) {
+					self.guestlist = localStorage.getItem('__cardgame_guestlist__')
+				} else {
 				}
 			}
-			self.startLongPolling();
-			//- if (self.whoseTurn === self.uid) {
-			//- 	setTimeout(function(){
-			//- 		self.longinterval = setInterval(function(){
-			//- 			self.updateCheck()
-			//- 		}, 10000)
-			//- 	},10000)
-			//- }
+			self.startPlay();
+			
+			socket.on('changed state', function(msg){
+				var keys = Object.keys(msg);
+				var count = 0;
+				keys.forEach(function(k){
+					if (k === 'playerhands') {
+						Object.keys(msg[k]).forEach(function(p){
+							self.playerhands[p] = msg[k][p]
+						})
+					} else {
+						self[k] = msg[k]
+					}
+				});
+				self.ready = self.isReady()
+			})
 		},
-		methods: Object.assign({}, /*jitsiFunctions,*/ functions)
+		methods: Object.assign({}, functions)
 		
 	})
