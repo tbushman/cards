@@ -61,6 +61,7 @@ app.get('/unload', async (req, res, next) => {
 			delete app.locals.vars[key]
 		}
 	})
+	app.locals.vars = initLocals
 	return res.redirect('/')
 })
 
