@@ -63,7 +63,7 @@ var functions = {
 		},
 		isReady: function() {
 			var self = this;
-			if (typeof self.guestlist.split === 'function') {
+			if (self.guestlist && typeof self.guestlist.split === 'function') {
 				var guestlist = self.guestlist.split(/\,\s{0,3}/);
 				if (guestlist.indexOf(self.uid) === -1) {
 					guestlist.push(self.uid);
