@@ -20,7 +20,7 @@ script(type="text/javascript").
 		data: function() {
 			var app = this;
 			var apt = this.parseObj(!{JSON.stringify(appTitle)});
-			var plyrs = this.parseObj(!{JSON.stringify(players)});
+			var plyrs = this.parseArr(!{JSON.stringify(players)});
 			var guests = this.nullIfEmpty(this.parseObj(!{JSON.stringify(guestlist)}));
 			var wt = this.parseObj(!{JSON.stringify(whoseTurn)});
 			var ti = this.parseObj(!{JSON.stringify(turnIndex)});
