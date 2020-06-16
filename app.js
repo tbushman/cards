@@ -128,7 +128,7 @@ function handleWs(socket) {
 	
 	socket.on('get state', () => {
 		console.log('getting state: ')
-		console.log(app.locals.vars);
+		console.log(app.locals.vars.players);
 		if (app.locals.vars) {
 			io.emit('changed state', app.locals.vars)
 		}
@@ -136,7 +136,7 @@ function handleWs(socket) {
 	
 	socket.on('change state', data => {
 		console.log('state change')
-		console.log(data)
+		console.log(data.players)
 		if (data && data !== '') {
 			app.locals.vars = data
 			io.emit('changed state', data)
