@@ -55,7 +55,7 @@ app.get('/unload', async (req, res, next) => {
 
 app.get('/invite/:uid', (req, res, next) => {
 	var vars = app.locals.vars;
-	var players = (!vars ? [] : vars.players;
+	var players = (!vars ? [] : vars.players);
 	var uid = decodeURIComponent(req.params.uid);
 	if (players.indexOf(uid) === -1) {
 		players.push(uid)
