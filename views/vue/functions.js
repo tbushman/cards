@@ -80,37 +80,16 @@ var functions = {
 			if (guestlist !== '') {
 				$.post('/invite/'+guestlist+'', function(response){
 					localStorage.setItem('__cardgame_guestlist__', decodeURIComponent(guestlist))
-					self.guestlistCollapse = true
+					self.guestlistCollapse = true;
+					// self.guestlist = decodeURIComponent(guestlist);
+					// self.updateCheck();
 				})
 			}
 		},
-		// startLongPolling: function() {
-		// 	var self = this;
-		// 	if (self.longinterval && self.longinterval !== '') {
-		// 		clearInterval(self.longinterval)
-		// 	}
-		// 	self.longinterval = setInterval(function(){
-		// 		if (self.whoseTurn === self.uid) {
-		// 			self.updateCheck()
-		// 		}
-		// 	}, 10000)
-		// },
-		// startPlayersPolling: function() {
-		// 	var self = this;
-		// 	self.interval = setInterval(function(){
-		// 		self.accountGuestlist();
-		// 		self.getPlayers();
-		// 		// self.runCheck();
-		// 		self.ready = self.isReady()
-		// 	}, 2000);
-		// },
-		// updatePlayers: function() {
-		// 	var self = this;
-		// 	if (self.players.indexOf(self.uid) === -1) {
-		// 		self.players.push(self.uid);
-		// 		self.updateCheck();
-		// 	}
-		// },
+		getCheck: function() {
+			var self = this;
+			socket.emit('get state');
+		},
 		updateCheck: function() {
 			var self = this;
 			var locals = {playerhands:{}};
@@ -155,22 +134,21 @@ var functions = {
 		getPlayers: function() {
 			var self = this;
 			if (!self.uid) {
-				if (window.location.href.split('invite/')[1]) {
-					self.uid = decodeURIComponent(window.location.href.split('invite/')[1])
+				if (window.location.pathname.split('invite/')[1]) {
+					self.uid = decodeURIComponent(window.location.pathname.split('invite/')[1])
 				} else {
 					return self.openModal()
 				}
 				
 			}
 			if (self.players.indexOf(self.uid) === -1) {
-				socket.emit('new player', self.uid)
+				console.log('existing players')
+				console.log(self.players)
+				self.players.push(self.uid);
+				self.updateCheck()
+			} else {
+				console.log(self.players, self.uid)
 			}
-			// if (self.players.indexOf(self.uid) === -1) {
-			// 	console.log('existing players')
-			// 	console.log(self.players)
-			// 	// self.players.push(self.uid);
-			// 	// self.updateCheck()
-			// }
 		},
 		getCards: function(){
 			var self = this;
@@ -240,9 +218,6 @@ var functions = {
 		},
 		deal: function() {
 			var self = this;
-			if (!self.players || self.players.length === 0) {
-				self.initDeal()
-			}
 			for (var i = 0; i < 6; i++) {
 				self.players.forEach(function(player){
 					if (!self.playerhands[player] || !Array.isArray(self.playerhands[player])) {
@@ -269,8 +244,8 @@ var functions = {
 		getUid: function() {
 			var self = this;
 			if (!self.uid) {
-				if (window.location.href.split('invite/')[1]) {
-					self.uid = decodeURIComponent(window.location.href.split('invite/')[1])
+				if (window.location.pathname.split('invite/')[1]) {
+					self.uid = decodeURIComponent(window.location.pathname.split('invite/')[1])
 				} else {
 					return self.openModal()
 				}
@@ -279,8 +254,8 @@ var functions = {
 		startPlay: function(name){
 			var self = this;
 			if (!self.uid) {
-				if (window.location.href.split('invite/')[1]) {
-					self.uid = decodeURIComponent(window.location.href.split('invite/')[1])
+				if (window.location.pathname.split('invite/')[1]) {
+					self.uid = decodeURIComponent(window.location.pathname.split('invite/')[1])
 				} else if (name) {
 					localStorage.setItem('__cardgame_uid__', name);
 					self.uid = name;
@@ -288,9 +263,6 @@ var functions = {
 					return self.openModal()
 				}
 			} 
-			// else if (self.players.length === 0) {
-			// 	self.players = [self.uid]
-			// }
 			var domain = 'bli.sh';
 			var options = {
 				roomName: self.appTitle,
@@ -313,15 +285,18 @@ var functions = {
 				iframe.style.top = '0'
 				iframe.style.left = '0'
 			}, 1000);
-			
-			if (!self.inprogress) {
-				self.inprogress = true;
+			// if (!self.inprogress) {
+			// 	self.getPlayers();
+			if (window.location.pathname.split('invite/')[1]) {
+				self.getCheck()
 			} else {
-				
+				self.inprogress = true;
+				self.accountGuestlist()
+				self.updateCheck()
 			}
-			self.getPlayers()
-			// self.accountGuestlist()
-			// self.updateCheck()
+			// } else {
+			// 	self.getCheck()
+			// }
 		},
 		tee: function(card, k) {
 			var self = this;
@@ -387,7 +362,7 @@ var functions = {
 			self.uid = name;
 			self.modal = false;
 			// if (!self.players || self.players.length === 0 || self.players.indexOf(self.uid) === -1) {
-				self.getPlayers();
+				// self.getPlayers();
 			// }
 			return self.startPlay(name)
 		},

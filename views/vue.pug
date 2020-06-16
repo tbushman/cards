@@ -29,11 +29,11 @@ script(type="text/javascript").
 			if (self.timeout && self.timeout !== '') {
 				clearTimeout(self.timeout);
 			}
-			if (self.players.indexOf(self.uid) !== 0) {
-				self.leave()
-			} else {
-				self.unload()
-			}
+			//- if (self.players.indexOf(self.uid) !== 0) {
+			//- 	self.leave()
+			//- } else {
+			//- 	self.unload()
+			//- }
 		},
 		mounted: async function() {
 			var self = this;
@@ -43,7 +43,8 @@ script(type="text/javascript").
 				if (localStorage.getItem('__cardgame_guestlist__')) {
 					self.guestlist = localStorage.getItem('__cardgame_guestlist__')
 				} else {
-					self.guestlistCollapse = false;
+					self.getCheck();
+					//- self.guestlistCollapse = false;
 				}
 			}
 			if (!self.cards || self.cards === '' || self.cards === '[]' || self.cards.length === 0) {
@@ -51,31 +52,59 @@ script(type="text/javascript").
 				self.getCards()
 			
 			}
-			self.getPlayers();
+			
+			//- if (!self.players || self.players.length === 0) {
+			//- 	self.getPlayers()
+			//- }
+			//- self.getPlayers();
 			self.startPlay();
+			
 			socket.on('changed state', function(msg){
 				var keys = Object.keys(msg);
+				var count = 0;
 				keys.forEach(function(k){
 					if (k === 'playerhands') {
 						Object.keys(msg[k]).forEach(function(p){
 							self.playerhands[p] = msg[k][p]
 						})
 					} else {
-						self[k] = msg[k]
+						if (msg[k] !== '') {
+							if (k === 'players') {
+								console.log('players vue, players socket')
+								console.log(self[k], msg[k])
+							}
+							self[k] = msg[k]
+						} else {
+							if (k === 'whoseTurn') {
+								self.whoseTurn = self.players[0];
+								self.turnIndex = 0;
+								count++;
+							}
+							//- console.log(k, self[k], msg[k])
+						}
 					}
 				});
 				self.ready = self.isReady()
-			})
-			socket.on('changed players', function(msg) {
-				console.log('changed players. Added')
-				console.log(msg)
-				if (self.players.indexOf(msg) === -1) {
-					if (self.guestlist.split(/\,\s{0,3}/).indexOf(self.uid) === 0) {
-						self.players.push(msg)
-						self.updateCheck()
-					}
+				if (count > 0) {
+					self.updateCheck()
 				}
 			})
+			//- socket.on('changed players', function(msg) {
+			//- 	console.log('changed players. Added')
+			//- 	console.log(msg)
+			//- 	if (self.players.indexOf(msg) === -1) {
+			//- 		if (self.guestlist.split(/\,\s{0,3}/).indexOf(self.uid) === 0) {
+			//- 			self.players.push(msg)
+			//- 			//- self.updateCheck()
+			//- 		}
+			//- 	}
+			//- })
+			//- socket.on('new turn', function(msg) {
+			//- 	console.log('next player: ')
+			//- 	console.log(msg);
+			//- 	self.whoseTurn = msg;
+			//- 	self.turnIndex = (self.players.indexOf(msg) === -1 ? 0 : self.players.indexOf(msg))
+			//- })
 		},
 		methods: Object.assign({}, functions)
 		

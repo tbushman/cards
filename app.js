@@ -1,4 +1,4 @@
-var dotenv = require('dotenv');
+const dotenv = require('dotenv');
 const helmet = require('helmet');
 const jQuery = require('jquery');
 const express = require('express');
@@ -9,22 +9,6 @@ const url = require('url');
 const http = require('http');
 const app = express();
 const localKeys = ['busy', 'players', 'playerhands', 'cards', 'discard', 'info', 'inprogress', 'teed', 'whoseTurn', 'turnIndex'];
-const initLocals = {
-	busy: false,
-	players: [],
-	playerhands: {},
-	cards: [],
-	discard: [],
-	info: '',
-	inprogress: false,
-	teed: {
-		card: null,
-		index: null
-	},
-	whoseTurn: '',
-	turnIndex: 0
-}
-
 app.set('views', path.join('.', 'views'));
 app.set('view engine', 'pug');
 app.use(express.static(path.join('.', 'public')));
@@ -33,30 +17,34 @@ app.use(helmet());
 app.use(helmet.noCache());
 
 dotenv.config()
-const play = {
-	name: '',
-	currentPlay: ''
-}
 
 app.use((req, res, next)=> {
-	req.app.locals.appUrl = (process.env.NODE_ENV==='production' ? process.env.APP_URL : `http://localhost:${process.env.PORT}`);
-	app.locals.$ = jQuery;
+	app.locals.appUrl = (process.env.NODE_ENV==='production' ? process.env.APP_URL : `http://localhost:${process.env.PORT}`);
+	// app.locals.$ = jQuery;
 	app.locals.appTitle = 'Cardgame';
 	return next();
 })
 
 app.get('/unload', async (req, res, next) => {
-	var keys = Object.keys(app.locals);
+	var keys = Object.keys(app.locals.vars);
 	console.log(keys);
 	await keys.forEach((key) => {
 		if (key !== 'settings' && key !== '$') {
-			delete app.locals[key]
+			delete app.locals.vars[key]
 		}
 	})
 	return res.redirect('/')
 })
 
 app.get('/invite/:uid', (req, res, next) => {
+	var vars = app.locals.vars;
+	var players = vars.players;
+	var uid = decodeURIComponent(req.params.uid);
+	if (players.indexOf(uid) === -1) {
+		players.push(uid)
+	}
+	app.locals.vars.players = players;
+	io.emit('change state', app.locals.vars);
 	return res.render('main')
 })
 
@@ -67,7 +55,7 @@ app.post('/invite/:guestlist', async(req, res, next) => {
 	console.log(list);
 	let b = null;
 	await list.forEach((item) => {
-		const gameurl = req.app.locals.appUrl + '/invite/' + encodeURIComponent(item)
+		const gameurl = app.locals.appUrl + '/invite/' + encodeURIComponent(item)
 		const data = {
 			from: 'Cardgame with family <tbushman@mg.bli.sh>',
 			to: item,
@@ -80,8 +68,9 @@ app.post('/invite/:guestlist', async(req, res, next) => {
 			b = body;
 		});
 	})
-	app.locals.guestlist = list.join(', ');
-	app.locals.inprogress = true;
+	app.locals.vars.guestlist = list.join(', ');
+	app.locals.vars.inprogress = true;
+	io.emit('change state', app.locals.vars);
 	return res.status(200).send('ok')
 
 	
@@ -92,7 +81,7 @@ app.get('/', (req, res, next) => {
 })
 
 app.post('/whoseturn', (req, res, next) => {
-	return res.status(200).send(app.locals.whoseTurn)
+	return res.status(200).send(app.locals.vars.whoseTurn)
 })
 
 app.use((err, req, res, next) => {
@@ -102,9 +91,8 @@ app.use((err, req, res, next) => {
 	if (
 		is500Err
 	) {
-		delete app.locals.play;
-		app.locals.busy = false;
-		app.locals.info = 'Please try again.'
+		app.locals.vars.busy = false;
+		app.locals.vars.info = 'Please try again.'
 		return res.status(500).end(err)
 	} else {
 		return next(err)
@@ -137,27 +125,37 @@ server.on('error', onError);
 server.on('listening', onListening);
 
 function handleWs(socket) {
-	socket.on('new player', data => {
-		console.log('new player');
-		console.log(data);
-		if (data && data !== '') {
-			io.emit('changed players', data)
+	// socket.on('new player', data => {
+	// 	console.log('new player');
+	// 	console.log(data);
+	// 	if (data && data !== '') {
+	// 		io.emit('changed players', data)
+	// 	}
+	// })
+	
+	socket.on('get state', () => {
+		console.log('getting state: ')
+		console.log(app.locals.vars);
+		if (app.locals.vars) {
+			io.emit('changed state', app.locals.vars)
 		}
 	})
+	
 	socket.on('change state', data => {
 		console.log('state change')
 		console.log(data)
 		if (data && data !== '') {
+			app.locals.vars = data
 			io.emit('changed state', data)
 		}
 	});
-	socket.on('whose turn', data => {
-		console.log('whose turn?')
-		console.log(data)
-		if (data && data !== '') {
-			io.emit('new turn', data)
-		}
-	});
+	// socket.on('whose turn', data => {
+	// 	console.log('whose turn?')
+	// 	console.log(data)
+	// 	if (data && data !== '') {
+	// 		io.emit('new turn', data)
+	// 	}
+	// });
 	socket.on('disconnect', () => {
 		
 	})
