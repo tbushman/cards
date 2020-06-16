@@ -34,6 +34,17 @@ app.use(helmet.noCache());
 
 dotenv.config()
 
+function ensureVars(req, res, next) {
+	// console.log('these vars')
+	// console.log(app.locals.vars)
+	if (!app.locals.vars) {
+		app.locals.vars = initLocals
+	}
+	return next()
+}
+
+app.get('*', ensureVars)
+
 app.use((req, res, next)=> {
 	app.locals.appUrl = (process.env.NODE_ENV==='production' ? process.env.APP_URL : `http://localhost:${process.env.PORT}`);
 	// app.locals.$ = jQuery;
@@ -55,6 +66,9 @@ app.get('/unload', async (req, res, next) => {
 
 app.get('/invite/:uid', (req, res, next) => {
 	var vars = app.locals.vars;
+	if (!vars) {
+		app.locals.vars = {}
+	}
 	var players = (!vars ? [] : vars.players);
 	var uid = decodeURIComponent(req.params.uid);
 	if (players.indexOf(uid) === -1) {
