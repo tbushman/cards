@@ -8,6 +8,22 @@ const path = require('path');
 const url = require('url');
 const http = require('http');
 const app = express();
+const initLocals = {
+	busy: false,
+	players: [],
+	playerhands: {},
+	cards: [],
+	discard: [],
+	info: '',
+	inprogress: false,
+	teed: {
+		card: null,
+		index: null
+	},
+	whoseTurn: '',
+	turnIndex: 0,
+	guestlist: app.locals.guestlist
+}
 const localKeys = ['busy', 'players', 'playerhands', 'cards', 'discard', 'info', 'inprogress', 'teed', 'whoseTurn', 'turnIndex'];
 app.set('views', path.join('.', 'views'));
 app.set('view engine', 'pug');
@@ -43,9 +59,17 @@ app.get('/invite/:uid', (req, res, next) => {
 	if (players.indexOf(uid) === -1) {
 		players.push(uid)
 	}
+	console.log('invited guest joined: ')
+	console.log(uid)
+	console.log(players)
 	app.locals.vars.players = players;
-	io.emit('change state', app.locals.vars);
-	return res.render('main')
+	// io.emit('changed state', app.locals.vars);
+	return res.render('main', {
+		players: players,
+		guestlist: app.locals.vars.guestlist,
+		whoseTurn: app.locals.whoseTurn,
+		turnIndex: app.locals.turnIndex
+	})
 })
 
 app.post('/invite/:guestlist', async(req, res, next) => {
@@ -77,7 +101,12 @@ app.post('/invite/:guestlist', async(req, res, next) => {
 })
 
 app.get('/', (req, res, next) => {
-	return res.render('main')
+	return res.render('main', {
+		players: app.locals.vars.players,
+		guestlist: app.locals.vars.guestlist,
+		whoseTurn: app.locals.whoseTurn,
+		turnIndex: app.locals.turnIndex
+	})
 })
 
 app.post('/whoseturn', (req, res, next) => {
@@ -127,23 +156,24 @@ server.on('listening', onListening);
 function handleWs(socket) {
 	
 	socket.on('get state', () => {
-		console.log('getting state: ')
-		console.log(app.locals.vars.players);
+		// console.log('getting state: ')
+		// console.log(app.locals.vars.players);
 		if (app.locals.vars) {
 			io.emit('changed state', app.locals.vars)
 		}
 	})
 	
 	socket.on('change state', data => {
-		console.log('state change')
-		console.log(data.players)
+		// console.log('state change')
+		// console.log(data.players)
 		if (data && data !== '') {
 			app.locals.vars = data
 			io.emit('changed state', data)
 		}
 	});
 	socket.on('disconnect', () => {
-		
+		app.locals.vars = initLocals
+		io.emit('changed state', app.locals.vars)
 	})
 }
 

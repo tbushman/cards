@@ -34,8 +34,9 @@ var functions = {
 			self.keys.forEach(function(k){
 				self[k] = self.initLocals[k]
 			});
-			self.inprogress = false;
-			self.updateCheck()
+			socket.emit('disconnect')
+			// self.inprogress = false;
+			// self.updateCheck()
 		},
 		leave: function() {
 			var self = this;
@@ -51,6 +52,19 @@ var functions = {
 		accountGuestlist: function() {
 			var self = this;
 			self.ready = self.isReady()
+			setTimeout(function(){
+				if (self.ready) {
+					if (!self.whoseTurn || self.whoseTurn === '') {
+						if (!self.turnIndex || isNaN(+self.turnIndex)) {
+							self.turnIndex = 0;
+							self.whoseTurn = self.players[self.turnIndex];
+						} else {
+							self.whoseTurn = self.players[self.turnIndex];
+						}
+						self.updateCheck()
+					}
+				}
+			},1000)
 		},
 		isReady: function() {
 			var self = this;
@@ -287,13 +301,17 @@ var functions = {
 			}, 1000);
 			// if (!self.inprogress) {
 			if (window.location.pathname.split('invite/')[1]) {
-				self.getCheck()
+				// self.getCheck()
+				setTimeout(function(){
+					console.log('players array upon guest join')
+					console.log(self.players)
+				},1000)
 			} else {
 				self.getPlayers();
 				self.inprogress = true;
-				self.accountGuestlist()
 				self.updateCheck()
 			}
+			self.accountGuestlist()
 			// } else {
 			// 	self.getCheck()
 			// }

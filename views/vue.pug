@@ -16,9 +16,17 @@ script(type="text/javascript").
 		data: function() {
 			var app = this;
 			var apt = this.parseObj(!{JSON.stringify(appTitle)});
+			var plyrs = this.parseObj(!{JSON.stringify(players)});
+			var guests = this.nullIfEmpty(this.parseObj(!{JSON.stringify(guestlist)}));
+			var wt = this.parseObj(!{JSON.stringify(whoseTurn)});
+			var ti = this.parseObj(!{JSON.stringify(turnIndex)});
 			return dataObj(
 				app,
-				apt
+				apt,
+				plyrs,
+				guests,
+				wt,
+				ti
 			)
 		},
 		updated: function() {
@@ -39,18 +47,18 @@ script(type="text/javascript").
 			var self = this;
 			self.getBubbleSize();
 			window.addEventListener('resize', self.handleResize);
+			self.getCheck();
+			if (!self.cards || self.cards === '' || self.cards === '[]' || self.cards.length === 0) {
+				console.log('no cards')
+				self.getCards()
+			}
 			if (!self.guestlist || self.guestlist === '' || self.guestlist === self.uid) {
 				if (localStorage.getItem('__cardgame_guestlist__')) {
 					self.guestlist = localStorage.getItem('__cardgame_guestlist__')
 				} else {
-					self.getCheck();
+					
 					//- self.guestlistCollapse = false;
 				}
-			}
-			if (!self.cards || self.cards === '' || self.cards === '[]' || self.cards.length === 0) {
-				console.log('no cards')
-				self.getCards()
-			
 			}
 			
 			//- if (!self.players || self.players.length === 0) {
@@ -68,26 +76,26 @@ script(type="text/javascript").
 							self.playerhands[p] = msg[k][p]
 						})
 					} else {
-						if (msg[k] !== '') {
+						//- if (msg[k] !== '') {
 							if (k === 'players') {
 								console.log('players vue, players socket')
 								console.log(self[k], msg[k])
 							}
 							self[k] = msg[k]
-						} else {
-							if (k === 'whoseTurn') {
-								self.whoseTurn = self.players[0];
-								self.turnIndex = 0;
-								count++;
-							}
-							//- console.log(k, self[k], msg[k])
-						}
+						//- } else {
+						//- 	if (k === 'whoseTurn') {
+						//- 		self.whoseTurn = self.players[0];
+						//- 		self.turnIndex = 0;
+						//- 		count++;
+						//- 	}
+						//- 	//- console.log(k, self[k], msg[k])
+						//- }
 					}
 				});
 				self.ready = self.isReady()
-				if (count > 0) {
-					self.updateCheck()
-				}
+				//- if (count > 0) {
+				//- 	self.updateCheck()
+				//- }
 			})
 			//- socket.on('changed players', function(msg) {
 			//- 	console.log('changed players. Added')

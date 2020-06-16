@@ -1,12 +1,16 @@
 function dataObj(
 	self,
-	appTitle
+	appTitle,
+	players,
+	guestlist,
+	whoseTurn,
+	turnIndex
 ) {
 	return {
 		res: window.innerWidth < 600,
 		api: null,
 		info: appTitle,
-		players: [],
+		players: players,
 		playerhands: {},
 		busy: false,
 		hov: '',
@@ -35,13 +39,13 @@ function dataObj(
 		user: '',
 		hand: [],
 		uid: (!localStorage.getItem('__cardgame_uid__') ? null : localStorage.getItem('__cardgame_uid__')),
-		whoseTurn: '',
-		turnIndex: 0,
+		whoseTurn: (!whoseTurn ? '' : whoseTurn),
+		turnIndex: (!turnIndex ? 0 : turnIndex),
 		teed: {card: null, index: null},
 		// unteed: unteed,
 		inprogress: false,
 		invite: [],
-		guestlist: (!localStorage.getItem('__cardgame_guestlist__') ? '' : localStorage.getItem('__cardgame_guestlist__') ),
+		guestlist: (!guestlist ? (!localStorage.getItem('__cardgame_guestlist__') ? '' : localStorage.getItem('__cardgame_guestlist__')) : guestlist ),
 		guestlistCollapse: true,
 		ready: false,
 		keys: ['busy', 'players', 'playerhands', 'cards', 'discard', 'info', 'inprogress', 'teed', 'whoseTurn', 'turnIndex', 'guestlist'],
