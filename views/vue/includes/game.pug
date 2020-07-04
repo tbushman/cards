@@ -1,4 +1,4 @@
-div.centerall(@resize="getBubbleSize()" style="float:right;" :style="{width: (!res ? '42%' : '100%'), padding: (!res ? '45px' : '0'), padding: (!res ? 'var(--thumbw)' : '0')}")
+div.centerall(@resize="getBubbleSize()" style="width: calc(100% - 90px);width:calc(100% - calc(var(--thumbw) * 2));" :style="{padding: (!res ? '45px' : '0'), padding: (!res ? 'var(--thumbw)' : '0')}")
 	#modal.centerallwrap.tb-10-m0(v-if="modal" style="height:auto;float:none;")
 		div.row
 			label(v-text="'Your e-mail address'")

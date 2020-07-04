@@ -27,10 +27,10 @@ var functions = {
 		unload: function() {
 			console.log('unloading jitsi api')
 			var self = this;
-			for (var i = 0; i < self.localTracks.length; i++) {
-				self.localTracks[i].dispose();
-			}
-			self.api.dispose();
+			// for (var i = 0; i < self.localTracks.length; i++) {
+			// 	self.localTracks[i].dispose();
+			// }
+			// self.api.dispose();
 			socket.emit('disconnect')
 		},
 		leave: function() {
@@ -255,35 +255,36 @@ var functions = {
 			if (!self.uid) {
 				if (window.location.pathname.split('invite/')[1]) {
 					self.uid = decodeURIComponent(window.location.pathname.split('invite/')[1])
-				} else if (name) {
+				} else if (name && typeof name === 'string') {
 					localStorage.setItem('__cardgame_uid__', name);
 					self.uid = name;
 				} else {
 					return self.openModal()
 				}
 			} 
-			var domain = 'bli.sh';
-			var options = {
-				roomName: self.appTitle,
-				width: (!self.framesize ? (!self.res ? (self.wWidth * 0.66) : (self.wWidth*0.86)) : self.framesize[0]) +'px',
-				height: (!self.framesize ? (!self.res ? ((self.wWidth * 0.66) * 0.72) : ((self.wWidth * 0.72) * 0.95)) : self.framesize[1])+'px',
-				parentNode: document.getElementById('meeting'),
-				// invitees: self.guestlist.split(/\,\s{0,3}/).map(function(guest){return {email:guest}}),
-				userInfo: { email: self.uid, displayName: self.uid }
-				// noSSL: false
-			};
-			self.api = new JitsiMeetExternalAPI(domain, options);
-			self.api.addEventListener('participantJoined', function(response) {
-				console.log('participantJoined')
-				console.log(response)
-			})
-
-			var iframe = document.getElementById('jitsiConferenceFrame')
-			setTimeout(function(){
-				iframe.style.position = 'absolute';
-				iframe.style.top = '0'
-				iframe.style.left = '0'
-			}, 1000);
+			self.api = 'jitsi-free'
+			// var domain = 'bli.sh';
+			// var options = {
+			// 	roomName: self.appTitle,
+			// 	width: (!self.framesize ? (!self.res ? (self.wWidth * 0.66) : (self.wWidth*0.86)) : self.framesize[0]) +'px',
+			// 	height: (!self.framesize ? (!self.res ? ((self.wWidth * 0.66) * 0.72) : ((self.wWidth * 0.72) * 0.95)) : self.framesize[1])+'px',
+			// 	parentNode: document.getElementById('meeting'),
+			// 	// invitees: self.guestlist.split(/\,\s{0,3}/).map(function(guest){return {email:guest}}),
+			// 	userInfo: { email: self.uid, displayName: self.uid }
+			// 	// noSSL: false
+			// };
+			// self.api = new JitsiMeetExternalAPI(domain, options);
+			// self.api.addEventListener('participantJoined', function(response) {
+			// 	console.log('participantJoined')
+			// 	console.log(response)
+			// })
+			// 
+			// var iframe = document.getElementById('jitsiConferenceFrame')
+			// setTimeout(function(){
+			// 	iframe.style.position = 'absolute';
+			// 	iframe.style.top = '0'
+			// 	iframe.style.left = '0'
+			// }, 1000);
 			if (window.location.pathname.split('invite/')[1]) {
 				setTimeout(function(){
 					console.log('players array upon guest join')
