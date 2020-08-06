@@ -10,7 +10,7 @@ div.centerall(@resize="getBubbleSize()" style="width: calc(100% - 90px);width:ca
 
 			//- div.tb-10-m0.tb-07-m2
 		//- :style="{height: (!api ? '33%' : 'auto')}"
-	div.row.centerallwrap(v-if="!modal && cards && cards.length > 0"  style="position:relative;height:auto;")
+	div.row.centerallwrap(v-if="!modal && cards && cards.length > 0"  style="position:relative;height:auto;max-height:30%;")
 		div.tb-10-m0(
 			v-if="(api && !guestlistCollapse && players.length > 0 && players.indexOf(uid) === 0)"
 			:style="{'padding-right': (!res ? '10px' : '0')}")
@@ -65,7 +65,7 @@ div.centerall(@resize="getBubbleSize()" style="width: calc(100% - 90px);width:ca
 				style="margin: 10px 0!important;"
 				:style="{float:(!guestlistCollapse ? 'right' : 'none')}"
 			)
-	div.row.centerallwrap(v-if="cards && cards.length > 0" style="position:relative;height:33%;")
+	div.row.centerallwrap(v-if="cards && cards.length > 0" style="position:relative;height:66%;")
 		div.tb-05-m0#cards(style="height:100%;position:relative;")
 			//- div(style="margin: 0 auto;position:relative;height:100%;")
 			//- :src="'/images/1B.svg'" 
@@ -73,12 +73,12 @@ div.centerall(@resize="getBubbleSize()" style="width: calc(100% - 90px);width:ca
 					v-for="(card, i) in cards" 
 					:id="'card'+i"
 					:src="'/images/1B.svg'" 
-					style="position:absolute;width:auto;height:72%;bottom:15px;right:10px;" 
+					style="position:absolute;width:auto;height:72%;bottom:15px;right:0;left:0;margin:auto;" 
 					:style="{transform:'translate(-'+(i*0.05)+'px,-'+(i*0.05)+'px)'}"
 					@click="draw()"
 				)
 		div.tb-05-m0#discard(style="height:100%;")
-			div.row(style="margin:0 auto;position:relative;width:50%;height:89%;border:1px solid black;")
+			div.row(style="margin:0 auto;position:relative;width:70%;height:89%;border:1px solid black;")
 				div(
 					style="position:absolute;width:100%;height:100%;right:0;bottom:10px;" 
 					@click="discardActive"

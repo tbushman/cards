@@ -1,7 +1,7 @@
 {
-  "name": "@tbushman/pdq",
+  "name": "@tbushman/cards",
   "version": "0.0.1",
-  "description": "Cabalistic_Necromancer",
+  "description": "group cardgame -- one card at a time",
   "main": "./app.js",
   "scripts": {
     "test": "cross-env TEST_ENV=true RECORD_ENV=true mocha --require jsdom-global/register --require mocha-snapshots --update",
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tbushman/pdqDN.git"
+    "url": "git+https://github.com/tbushman/cards.git"
   },
   "author": "tbushman",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/tbushman/pdqDN/issues"
+    "url": "https://github.com/tbushman/cards/issues"
   },
-  "homepage": "https://github.com/tbushman/pdqDN#readme",
+  "homepage": "https://github.com/tbushman/cards#readme",
   "nodemonConfig": {
     "exec": "node ./app.js",
     "watch": [
